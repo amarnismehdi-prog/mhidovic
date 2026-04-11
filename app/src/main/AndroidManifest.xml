@@ -4,6 +4,15 @@
 
     <!-- ===== PERMISSIONS BYD AUTO API ===== -->
 
+    <!-- Foreground Service pour maintenir la projection cluster en background -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <!-- Connexion TCP localhost:5555 pour dadb (ADB local → popup autorisation) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Overlay flottant pour le panneau de contrôle cluster (interaction sans quitter l'app) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
     <!-- Injection d'événements input (requis pour piloter l'app cluster depuis l'écran principal)
          C'est une signature permission — accordée grâce à la signature platform.keystore BYD -->
     <uses-permission android:name="android.permission.INJECT_EVENTS"/>
@@ -24,10 +33,10 @@
     <!-- Capteurs (luminosité, gyroscope…) -->
     <uses-permission android:name="android.permission.BYDAUTO_SENSOR_GET"/>
 
-    <!-- Verrouillage des portes -->
-    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_COMMON"/>
-    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_GET"/>
-    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_SET"/>
+    <!-- Verrouillage des portes (nom réel sur DiLink 3.0 : DOOR_LOCK avec underscore) -->
+    <uses-permission android:name="android.permission.BYDAUTO_DOOR_LOCK_COMMON"/>
+    <uses-permission android:name="android.permission.BYDAUTO_DOOR_LOCK_GET"/>
+    <uses-permission android:name="android.permission.BYDAUTO_DOOR_LOCK_SET"/>
 
     <!-- Moteur -->
     <uses-permission android:name="android.permission.BYDAUTO_ENGINE_COMMON"/>
@@ -93,6 +102,7 @@
             android:label="BYD Dashboard"
             android:theme="@style/AppTheme.NoActionBar"
             android:resizeableActivity="true"
+            android:exported="true"
             android:launchMode="singleTop"/>
 
         <!-- Écran de diagnostic de compatibilité -->
@@ -109,6 +119,11 @@
         <activity
             android:name=".BYDLiveActivity"
             android:label="BYD Live"/>
+
+        <!-- Foreground Service : maintient la projection cluster en background -->
+        <service
+            android:name=".ClusterService"
+            android:exported="false"/>
 
     </application>
 

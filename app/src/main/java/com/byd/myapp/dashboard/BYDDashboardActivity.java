@@ -1,6 +1,7 @@
 package com.byd.myapp.dashboard;
 
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.hardware.bydauto.energy.BYDAutoEnergyDevice;
 import android.hardware.bydauto.gearbox.BYDAutoGearboxDevice;
 import android.hardware.bydauto.speed.AbsBYDAutoSpeedListener;
@@ -8,6 +9,7 @@ import android.hardware.bydauto.speed.BYDAutoSpeedDevice;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
 import android.widget.TextView;
 
 import com.byd.myapp.R;
@@ -35,6 +37,21 @@ public class BYDDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Figer la taille de la fenêtre AVANT setContentView().
+        // En mode FREEFORM (windowingMode=5), le layout match_parent + l'absence de bornes
+        // fixes causent un agrandissement progressif du rectangle visible sur le cluster.
+        // getRealSize() depuis l'Activity retourne les dimensions du display sur lequel
+        // elle s'exécute (display 1 = cluster), pas du display principal.
+        try {
+            Display d = getWindowManager().getDefaultDisplay();
+            Point size = new Point(1920, 480); // défaut BYD Seal cluster
+            d.getRealSize(size);
+            getWindow().setLayout(size.x, size.y);
+        } catch (Exception ignored) {
+            getWindow().setLayout(1920, 480);
+        }
+
         setContentView(R.layout.activity_dashboard);
 
         tvSpeed   = (TextView) findViewById(R.id.dash_speed);

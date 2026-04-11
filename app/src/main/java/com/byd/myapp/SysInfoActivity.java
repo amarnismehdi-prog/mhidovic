@@ -16,7 +16,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.byd.myapp.AppLogger;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -56,6 +55,11 @@ public class SysInfoActivity extends AppCompatActivity {
     private Button btnSave;
     private Button btnShare;
     private StringBuilder mReport;
+
+    @Override
+    protected void attachBaseContext(android.content.Context base) {
+        super.attachBaseContext(LocaleHelper.applyLocale(base));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

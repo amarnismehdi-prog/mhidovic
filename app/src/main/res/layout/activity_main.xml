@@ -24,6 +24,18 @@
             android:textStyle="bold"/>
 
         <Button
+            android:id="@+id/btn_activate_cluster"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="🖥 Activer"
+            android:textSize="12sp"
+            android:backgroundTint="#1565C0"
+            android:textColor="#FFFFFF"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:layout_marginEnd="4dp"/>
+
+        <Button
             android:id="@+id/btn_restore_byd"
             android:layout_width="wrap_content"
             android:layout_height="36dp"

@@ -4,7 +4,11 @@ import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.util.Log;
+import android.view.Display;
 
 import com.byd.myapp.AppLogger;
 
@@ -64,8 +68,7 @@ public class DashboardLauncher {
             return false;
         }
 
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         return launchWithDisplayId(launchIntent, mDashboardDisplayId);
     }
@@ -115,6 +118,14 @@ public class DashboardLauncher {
     /**
      * Cœur du mécanisme : appel par réflexion à ActivityOptions.setLaunchDisplayId().
      * Accessible depuis une app signée platform.keystore sans permission supplémentaire.
+     *
+     * INSIGHT (issu analyse WindowManagement 1.2 pour DiLink 3.0/4.0) :
+     *   Sur BYD Seal, le cluster = display ID 1 dans IActivityManager.
+     *   Il n'apparaît PAS dans DisplayManager.getDisplays() — géré par le kernel BYD.
+     *   Context.startActivity() avec setLaunchDisplayId est refusé sans platform key.
+     *   IActivityManager.startActivityAsUser() avec userId=-2 contourne ça.
+     *
+     * Cette méthode essaie le path direct (Context.startActivity) PUIS le path IActivityManager.
      */
     private boolean launchWithDisplayId(Intent intent, int displayId) {
         try {
@@ -125,10 +136,78 @@ public class DashboardLauncher {
             setLaunchDisplayId.setAccessible(true);
             setLaunchDisplayId.invoke(options, displayId);
 
-            mContext.startActivity(intent, options.toBundle());
-            Log.i(TAG, "Lancé sur display " + displayId + " : " + intent);
-            AppLogger.log(TAG, "LAUNCH OK display=" + displayId + " pkg=" + intent.getPackage());
-            return true;
+            // WINDOWING_MODE_FULLSCREEN (1) est refusé par DiLink 3.0 — confirmé TEST 10.
+            // L'activité apparaît en petite fenêtre flottante. FIX (Byd Dashboard APK v1.10.5) :
+            //   → WINDOWING_MODE_FREEFORM (5) + setLaunchBounds(0, 0, realW, realH)
+            try {
+                Method setWM = ActivityOptions.class
+                        .getDeclaredMethod("setLaunchWindowingMode", int.class);
+                setWM.setAccessible(true);
+                setWM.invoke(options, 5); // WINDOWING_MODE_FREEFORM = 5
+                Log.i(TAG, "setLaunchWindowingMode(FREEFORM=5) appliqué");
+            } catch (NoSuchMethodException ignored) {
+                Log.w(TAG, "setLaunchWindowingMode absent (ROM trop ancienne)");
+            }
+            // Bounds = dimensions réelles du display → occupe tout le cluster
+            try {
+                Method setLB = ActivityOptions.class
+                        .getDeclaredMethod("setLaunchBounds", Rect.class);
+                setLB.setAccessible(true);
+                Point size = new Point(1920, 480); // défaut BYD Seal cluster
+                DisplayManager dm = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+                Display targetDisplay = (dm != null) ? dm.getDisplay(displayId) : null;
+                if (targetDisplay != null) {
+                    targetDisplay.getRealSize(size);
+                    Log.i(TAG, "getRealSize display " + displayId + " → " + size.x + "×" + size.y);
+                } else {
+                    Log.w(TAG, "getDisplay(" + displayId + ") null → fallback 1920×480");
+                }
+                setLB.invoke(options, new Rect(0, 0, size.x, size.y));
+                Log.i(TAG, "setLaunchBounds(0,0," + size.x + "," + size.y + ") appliqué");
+            } catch (NoSuchMethodException ignored) {
+                Log.w(TAG, "setLaunchBounds absent");
+            }
+
+            // Essai 1 : Context.startActivity (fonctionnel sur display 0, peut échouer sur display 1)
+            try {
+                mContext.startActivity(intent, options.toBundle());
+                Log.i(TAG, "Context.startActivity OK display=" + displayId);
+                AppLogger.log(TAG, "LAUNCH OK display=" + displayId);
+                return true;
+            } catch (Exception e1) {
+                Log.w(TAG, "Context.startActivity échoué display=" + displayId + " — essai IActivityManager", e1);
+            }
+
+            // Essai 2 : IActivityManager.startActivityAsUser (path WindowManagement, userId=-2)
+            try {
+                Class<?> amClass = Class.forName("android.app.IActivityManager$Stub");
+                Class<?> smClass = Class.forName("android.os.ServiceManager");
+                Method getService = smClass.getDeclaredMethod("getService", String.class);
+                Object iAm = amClass.getMethod("asInterface", android.os.IBinder.class)
+                        .invoke(null, getService.invoke(null, "activity"));
+                if (iAm == null) throw new IllegalStateException("IActivityManager null");
+
+                // startActivityAsUser(null, null, intent, null, null, null, 0, 0, null, optBundle, -2)
+                Method startActivity = null;
+                for (java.lang.reflect.Method m : iAm.getClass().getMethods()) {
+                    if (m.getName().equals("startActivityAsUser")) {
+                        Class<?>[] params = m.getParameterTypes();
+                        if (params.length == 11) { startActivity = m; break; }
+                    }
+                }
+                if (startActivity == null) throw new NoSuchMethodException("startActivityAsUser(11)");
+                int result = (int) startActivity.invoke(iAm,
+                        null, null, intent, null, null, null, 0, 0, null,
+                        options.toBundle(), -2);
+                Log.i(TAG, "IActivityManager.startActivityAsUser result=" + result + " display=" + displayId);
+                AppLogger.log(TAG, "LAUNCH IActMgr result=" + result + " display=" + displayId);
+                return result == 0;
+            } catch (Exception e2) {
+                Log.e(TAG, "IActivityManager.startActivityAsUser échoué", e2);
+                AppLogger.log(TAG, "LAUNCH IActMgr ECHEC — " + e2.getClass().getSimpleName() + ": " + e2.getMessage());
+            }
+
+            return false;
 
         } catch (NoSuchMethodException e) {
             Log.e(TAG, "setLaunchDisplayId introuvable dans ce ROM — fallback display principal", e);

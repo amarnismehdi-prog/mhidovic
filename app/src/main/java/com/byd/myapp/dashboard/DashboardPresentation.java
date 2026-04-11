@@ -2,8 +2,6 @@ package com.byd.myapp.dashboard;
 
 import android.app.Presentation;
 import android.content.Context;
-import android.hardware.bydauto.energy.BYDAutoEnergyDevice;
-import android.hardware.bydauto.speed.BYDAutoSpeedDevice;
 import android.os.Bundle;
 import android.view.Display;
 import android.widget.TextView;
@@ -11,17 +9,13 @@ import android.widget.TextView;
 import com.byd.myapp.R;
 
 /**
- * DashboardPresentation — affiché sur le second écran (instrument cluster).
+ * DashboardPresentation — implémentation Presentation API (NON UTILISÉE).
  *
- * Le système Android expose le dashboard du BYD Seal comme un Display secondaire
- * de catégorie DISPLAY_CATEGORY_PRESENTATION. On utilise l'API standard
- * android.app.Presentation pour y projeter une vue.
+ * Conservée comme référence de l'approche android.app.Presentation.
+ * L'application utilise BYDDashboardActivity (Activity sur display 1) à la place.
  *
- * Cycle de vie :
- *   - Instancier avec le Display trouvé par DashboardDisplayHelper
- *   - Appeler show() pour afficher
- *   - Appeler update*() depuis MainActivity pour rafraîchir les données
- *   - Appeler dismiss() dans onDestroy() de l'Activity hôte
+ * Le cluster BYD Seal n'apparaît pas comme un display DISPLAY_CATEGORY_PRESENTATION
+ * dans DisplayManager — il est directement adressable via IActivityManager/displayId=1.
  */
 public class DashboardPresentation extends Presentation {
 

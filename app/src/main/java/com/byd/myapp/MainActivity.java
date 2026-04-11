@@ -1,7 +1,9 @@
 package com.byd.myapp;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.content.pm.ResolveInfo;
@@ -9,6 +11,7 @@ import android.content.pm.ResolveInfo;
 import com.byd.myapp.AppLogger;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -25,7 +28,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.byd.myapp.dashboard.ClusterInputForwarder;
-import com.byd.myapp.dashboard.DashboardDisplayHelper;
 import com.byd.myapp.dashboard.DashboardLauncher;
 import com.byd.myapp.model.AppInfo;
 
@@ -42,20 +44,39 @@ import java.util.List;
  * Le bouton "Restaurer BYD" ramène le widget vitesse/batterie/rapport.
  */
 public class MainActivity extends AppCompatActivity
-        implements DashboardDisplayHelper.Listener,
+        implements ClusterService.Listener,
                    AppListAdapter.OnSendToDashboardListener {
 
     private static final String TAG = "BYDApp";
 
-    // Dashboard
-    private DashboardDisplayHelper  mDashboardHelper;
-    private DashboardLauncher       mDashboardLauncher;
+    // Service cluster
+    private ClusterService          mClusterService;
+    private boolean                 mServiceBound = false;
+    private DashboardLauncher       mDashboardLauncher; // référence locale mise à jour après bind
     private ClusterInputForwarder   mClusterInputForwarder;
+
+    private final ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            mClusterService = ((ClusterService.LocalBinder) binder).getService();
+            mServiceBound   = true;
+            mDashboardLauncher = mClusterService.getLauncher();
+            mClusterService.setListener(MainActivity.this);
+            AppLogger.log(TAG, "Bind ClusterService OK — displayId=" + mClusterService.getDisplayId());
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mServiceBound   = false;
+            mClusterService = null;
+            AppLogger.log(TAG, "ClusterService déconnecté");
+        }
+    };
     private String mCurrentDashboardApp = null;
 
     // UI — barre statut
     private TextView tvDashboardStatus;
     private Button   btnRestoreByd;
+    private Button   btnActivateCluster;
     private RecyclerView rvApps;
     private AppListAdapter mAdapter;
 
@@ -95,9 +116,10 @@ public class MainActivity extends AppCompatActivity
             ActivityCompat.requestPermissions(this, COMMON_PERMS, REQ_COMMON_PERMS);
         }
 
-        tvDashboardStatus = (TextView)    findViewById(R.id.tv_dashboard_status);
-        btnRestoreByd     = (Button)      findViewById(R.id.btn_restore_byd);
-        rvApps            = (RecyclerView) findViewById(R.id.rv_apps);
+        tvDashboardStatus  = (TextView)    findViewById(R.id.tv_dashboard_status);
+        btnRestoreByd      = (Button)      findViewById(R.id.btn_restore_byd);
+        btnActivateCluster = (Button)      findViewById(R.id.btn_activate_cluster);
+        rvApps             = (RecyclerView) findViewById(R.id.rv_apps);
 
         // Bouton diagnostic ⚙
         Button btnDiag = (Button) findViewById(R.id.btn_diag);
@@ -156,9 +178,20 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        // Dashboard
-        mDashboardHelper       = new DashboardDisplayHelper(this, this);
-        mDashboardLauncher     = new DashboardLauncher(this);
+        // Bouton "Activer cluster" — lance les commandes Freedom pour libérer le display
+        btnActivateCluster.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activateCluster();
+            }
+        });
+
+        // Démarrer + binder au ClusterService (maintient la projection en background)
+        Intent svcIntent = new Intent(this, ClusterService.class);
+        startService(svcIntent);
+        bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
+
+        mDashboardLauncher     = new DashboardLauncher(this); // temporaire jusqu'au bind
         mClusterInputForwarder = new ClusterInputForwarder(this);
 
         // Panel contrôle cluster
@@ -236,37 +269,55 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        mDashboardHelper.start();
+        // Rebind au service si nécessaire (ex: rotation d'écran)
+        if (!mServiceBound) {
+            Intent svcIntent = new Intent(this, ClusterService.class);
+            bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mDashboardHelper.stop();
+        // Retirer le listener mais garder le service actif : la projection continue
+        if (mServiceBound && mClusterService != null) {
+            mClusterService.setListener(null);
+        }
     }
 
-    // ---- DashboardDisplayHelper.Listener ----
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mServiceBound) {
+            unbindService(mServiceConn);
+            mServiceBound = false;
+        }
+    }
+
+    // ---- ClusterService.Listener ----
 
     @Override
-    public void onDashboardDisplayConnected(Display display, int displayId) {
+    public void onClusterDisplayConnected(Display display, int displayId) {
         Log.i(TAG, "Dashboard display connecté : id=" + displayId);
         AppLogger.log(TAG, "Dashboard connecté — displayId=" + displayId
-                + " nom=" + display.getName());
-        mDashboardLauncher.setDashboardDisplayId(displayId);
-        mClusterInputForwarder.setClusterDisplay(display);
+                + " nom=" + (display != null ? display.getName() : "IActivityManager/fallback"));
+        // Le service a déjà mis à jour son DashboardLauncher — on synchronise la référence locale
+        if (mServiceBound && mClusterService != null) {
+            mDashboardLauncher = mClusterService.getLauncher();
+        }
+        mClusterInputForwarder.setClusterDisplay(display); // null-safe dans setClusterDisplay
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // Dashboard prêt — l'affichage BYD d'origine reste actif
-                // jusqu'à ce que l'utilisateur choisisse une app dans la liste
                 updateDashboardStatus(null);
                 mAdapter.setDashboardAvailable(true);
+                btnActivateCluster.setEnabled(false);
             }
         });
     }
 
     @Override
-    public void onDashboardDisplayDisconnected() {
+    public void onClusterDisplayDisconnected() {
         AppLogger.log(TAG, "Dashboard déconnecté");
         runOnUiThread(new Runnable() {
             @Override
@@ -274,6 +325,7 @@ public class MainActivity extends AppCompatActivity
                 mCurrentDashboardApp = null;
                 tvDashboardStatus.setText("Dashboard : non connecté");
                 btnRestoreByd.setEnabled(false);
+                btnActivateCluster.setEnabled(true); // Permettre réactivation
                 mAdapter.setDashboardAvailable(false);
                 panelClusterControl.setVisibility(View.GONE);
             }
@@ -289,13 +341,17 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        // DashboardLauncher utilise Context.startActivity() + réflexion setLaunchDisplayId(),
+        // exécuté dans le processus de l'app (uid de l'app, pas uid=2000 shell).
+        // L'ancien chemin AdbLocalClient.launchOnCluster() passait par "am start-activity"
+        // (uid=2000) → SafeActivityOptions.checkPermissions le rejette sur les apps tierces.
+        AppLogger.log(TAG, "Envoi cluster — " + app.packageName
+                + " display=" + mDashboardLauncher.getDashboardDisplayId());
         boolean launched = mDashboardLauncher.launchOnDashboard(app.packageName);
-        AppLogger.log(TAG, "Envoi dashboard — " + app.packageName
-                + " → " + (launched ? "OK" : "ÉCHEC"));
+        AppLogger.log(TAG, "launchOnDashboard " + app.packageName + " → " + (launched ? "OK" : "ÉCHEC"));
         if (launched) {
             mCurrentDashboardApp = app.appName;
             updateDashboardStatus(app.appName);
-            // Afficher le panel de contrôle et réinitialiser le hint tactile
             tvControlAppName.setText(app.appName);
             View hint = clusterTouchpad.findViewById(R.id.tv_touchpad_hint);
             if (hint != null) hint.setVisibility(View.VISIBLE);
@@ -326,16 +382,59 @@ public class MainActivity extends AppCompatActivity
 
     // ---- Restaurer l'affichage BYD d'origine ----
 
-    private void restoreBydDashboard() {
-        boolean ok = mDashboardLauncher.restoreSystemDashboard();
-        AppLogger.log(TAG, "Restauration BYD → " + (ok ? "OK" : "ÉCHEC"));
-        if (ok) {
-            mCurrentDashboardApp = null;
-            updateDashboardStatus(null);
-            panelClusterControl.setVisibility(View.GONE);
-        } else {
-            Toast.makeText(this, getString(R.string.toast_dashboard_unavailable), Toast.LENGTH_SHORT).show();
+    private void activateCluster() {
+        if (!mServiceBound || mClusterService == null) {
+            Toast.makeText(this, "Service non prêt — attendez quelques secondes", Toast.LENGTH_SHORT).show();
+            return;
         }
+        btnActivateCluster.setEnabled(false);
+        tvDashboardStatus.setText("Activation cluster...");
+        AppLogger.log(TAG, "Activation cluster — ClusterService.restartProjection()");
+        mClusterService.restartProjection();
+
+        // Réactiver le bouton si le display n'apparaît pas sous 9s
+        tvDashboardStatus.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (!mServiceBound || mClusterService == null
+                        || mClusterService.getDisplayId() < 0) {
+                    btnActivateCluster.setEnabled(true);
+                    tvDashboardStatus.setText("Display non détecté — réessayez");
+                }
+            }
+        }, 9000);
+    }
+
+    private void restoreBydDashboard() {
+        final int displayId = mDashboardLauncher.getDashboardDisplayId();
+        if (displayId < 0) {
+            Toast.makeText(this, getString(R.string.toast_dashboard_unavailable), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        btnRestoreByd.setEnabled(false);
+        AdbLocalClient.restoreBydOnCluster(this, displayId, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        mCurrentDashboardApp = null;
+                        updateDashboardStatus(null);
+                        panelClusterControl.setVisibility(View.GONE);
+                        AppLogger.log(TAG, "BYD restauré ✓");
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        btnRestoreByd.setEnabled(true);
+                        Toast.makeText(MainActivity.this,
+                                "Restauration échouée: " + error, Toast.LENGTH_LONG).show();
+                        AppLogger.log(TAG, "Restauration ÉCHEC: " + error);
+                    }
+                });
+            }
+        });
     }
 
     private void updateDashboardStatus(String appName) {
@@ -386,9 +485,5 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
 }
 

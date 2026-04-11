@@ -113,6 +113,7 @@ public class BYDLiveActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         mRunning = true;
+        mGetPermErrorLogged = false;
         mHandler.post(mPollRunnable);
         AppLogger.log(TAG, "Panneau live ouvert");
     }
@@ -125,6 +126,8 @@ public class BYDLiveActivity extends AppCompatActivity {
         AppLogger.log(TAG, "Panneau live fermé");
     }
 
+    private boolean mGetPermErrorLogged = false;
+
     // -------------------------------------------------------------------------
 
     private void initDevices() {
@@ -135,9 +138,18 @@ public class BYDLiveActivity extends AppCompatActivity {
         boolean hasGearbox = ContextCompat.checkSelfPermission(this,
                 "android.permission.BYDAUTO_GEARBOX_COMMON") == PackageManager.PERMISSION_GRANTED;
 
-        if (hasSpeed)   mSpeedDevice   = BYDAutoSpeedDevice.getInstance(this);
-        if (hasEnergy)  mEnergyDevice  = BYDAutoEnergyDevice.getInstance(this);
-        if (hasGearbox) mGearboxDevice = BYDAutoGearboxDevice.getInstance(this);
+        if (hasSpeed) {
+            try { mSpeedDevice = BYDAutoSpeedDevice.getInstance(this); }
+            catch (Exception e) { AppLogger.log(TAG, "SpeedDevice init: " + e.getClass().getSimpleName() + ": " + e.getMessage()); }
+        }
+        if (hasEnergy) {
+            try { mEnergyDevice = BYDAutoEnergyDevice.getInstance(this); }
+            catch (Exception e) { AppLogger.log(TAG, "EnergyDevice init: " + e.getClass().getSimpleName() + ": " + e.getMessage()); }
+        }
+        if (hasGearbox) {
+            try { mGearboxDevice = BYDAutoGearboxDevice.getInstance(this); }
+            catch (Exception e) { AppLogger.log(TAG, "GearboxDevice init: " + e.getClass().getSimpleName() + ": " + e.getMessage()); }
+        }
 
         String status = "Speed: "   + status(mSpeedDevice)
                 + "  Energy: "  + status(mEnergyDevice)
@@ -163,25 +175,39 @@ public class BYDLiveActivity extends AppCompatActivity {
 
     private void poll() {
         if (mSpeedDevice != null) {
-            double speed = mSpeedDevice.getCurrentSpeed();
-            tvSpeed.setText(String.format("%.0f km/h", speed));
+            try {
+                double speed = mSpeedDevice.getCurrentSpeed();
+                tvSpeed.setText(String.format("%.0f km/h", speed));
+            } catch (Exception e) { tvSpeed.setText("ERR"); AppLogger.log(TAG, "speed: " + e.getMessage()); }
         } else {
             tvSpeed.setText("-- km/h");
         }
 
         if (mEnergyDevice != null) {
-            tvEnergy.setText(energyLabel(mEnergyDevice.getEnergyMode()));
-            tvPowerGen.setText(mEnergyDevice.getPowerGenerationValue() + " kW");
+            try {
+                tvEnergy.setText(energyLabel(mEnergyDevice.getEnergyMode()));
+                tvPowerGen.setText(mEnergyDevice.getPowerGenerationValue() + " kW");
+            } catch (Exception e) {
+                tvEnergy.setText("ERR");
+                if (!mGetPermErrorLogged) { AppLogger.log(TAG, "energy: " + e.getMessage()); }
+            }
         } else {
             tvEnergy.setText("--");
             tvPowerGen.setText("-- kW");
         }
 
         if (mGearboxDevice != null) {
-            tvGear.setText(gearLabel(mGearboxDevice.getGearboxAutoModeType()));
+            try {
+                tvGear.setText(gearLabel(mGearboxDevice.getGearboxAutoModeType()));
+            } catch (Exception e) {
+                tvGear.setText("ERR");
+                if (!mGetPermErrorLogged) { AppLogger.log(TAG, "gear: " + e.getMessage()); }
+            }
         } else {
             tvGear.setText("-");
         }
+
+        mGetPermErrorLogged = true;
 
         // Mise à jour du journal
         final String log = AppLogger.get();

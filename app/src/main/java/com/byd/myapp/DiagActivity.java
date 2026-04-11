@@ -12,8 +12,6 @@ import android.widget.TextView;
 
 import android.content.Intent;
 
-import com.byd.myapp.AppLogger;
-
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -41,7 +39,40 @@ public class DiagActivity extends AppCompatActivity {
     private TextView tvAdbResult;
     private TextView tvLaunchResult;
     private TextView tvConclusion;
-    private Button btnRunDiag;
+    private Button   btnRunDiag;
+
+    // TEST 5
+    private TextView tvAdbLocalResult;
+    private Button   btnAdbLocal;
+    private Button   btnAdbShare;
+
+    // TEST 6
+    private TextView tvClusterProbeResult;
+    private Button   btnClusterProbe;
+    private Button   btnClusterProbeShare;
+
+    // TEST 7
+    private TextView tvAutoServiceResult;
+    private Button   btnAutoServiceProbe;
+    private Button   btnAutoServiceShare;
+
+    // TEST 8
+    private TextView tvClusterActivResult;
+    private Button   btnClusterActiv;
+    private Button   btnClusterActivShare;
+
+    private TextView tvVdProbeResult;
+    private Button   btnVdProbe;
+    private Button   btnVdProbeShare;
+
+    private TextView tvDisplay1Result;
+    private Button   btnDisplay1;
+    private Button   btnDisplay1Share;
+
+    @Override
+    protected void attachBaseContext(android.content.Context base) {
+        super.attachBaseContext(LocaleHelper.applyLocale(base));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,11 +85,355 @@ public class DiagActivity extends AppCompatActivity {
         tvLaunchResult       = (TextView) findViewById(R.id.tv_launch_result);
         tvConclusion         = (TextView) findViewById(R.id.tv_conclusion);
         btnRunDiag           = (Button)   findViewById(R.id.btn_run_diag);
+        tvAdbLocalResult      = (TextView) findViewById(R.id.tv_adb_local_result);
+        btnAdbLocal           = (Button)   findViewById(R.id.btn_adb_local);
+        btnAdbShare           = (Button)   findViewById(R.id.btn_adb_share);
+        tvClusterProbeResult  = (TextView) findViewById(R.id.tv_cluster_probe_result);
+        btnClusterProbe       = (Button)   findViewById(R.id.btn_cluster_probe);
+        btnClusterProbeShare  = (Button)   findViewById(R.id.btn_cluster_probe_share);
+
+        tvAutoServiceResult   = (TextView) findViewById(R.id.tv_autoservice_result);
+        btnAutoServiceProbe   = (Button)   findViewById(R.id.btn_autoservice_probe);
+        btnAutoServiceShare   = (Button)   findViewById(R.id.btn_autoservice_share);
+
+        tvClusterActivResult  = (TextView) findViewById(R.id.tv_cluster_activ_result);
+        btnClusterActiv       = (Button)   findViewById(R.id.btn_cluster_activ);
+        btnClusterActivShare  = (Button)   findViewById(R.id.btn_cluster_activ_share);
+
+        tvVdProbeResult       = (TextView) findViewById(R.id.tv_vd_probe_result);
+        btnVdProbe            = (Button)   findViewById(R.id.btn_vd_probe);
+        btnVdProbeShare       = (Button)   findViewById(R.id.btn_vd_probe_share);
+
+        tvDisplay1Result      = (TextView) findViewById(R.id.tv_display1_result);
+        btnDisplay1           = (Button)   findViewById(R.id.btn_display1);
+        btnDisplay1Share      = (Button)   findViewById(R.id.btn_display1_share);
+
+        btnAdbShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT, tvAdbLocalResult.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 5"));
+            }
+        });
+        btnAdbLocal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btnAdbLocal.setEnabled(false);
+                tvAdbLocalResult.setText("Connexion à localhost:5555…\n" +
+                        "⏳ Le popup va apparaître sur cet écran — appuyez AUTORISER.");
+                AppLogger.log("DiagADB", "Lancement connexion ADB locale");
+
+                AdbLocalClient.connectAndGrant(DiagActivity.this,
+                        new AdbLocalClient.Callback() {
+                    @Override
+                    public void onSuccess(final String report) {
+                        runOnUiThread(new Runnable() {
+                            @Override public void run() {
+                                tvAdbLocalResult.setText("✅ Connexion établie\n\n" + report);
+                                btnAdbLocal.setEnabled(true);
+                            }
+                        });
+                    }
+                    @Override
+                    public void onError(final String error) {
+                        runOnUiThread(new Runnable() {
+                            @Override public void run() {
+                                tvAdbLocalResult.setText(
+                                        "❌ Échec : " + error + "\n\n" +
+                                        "→ Vérifiez que le débogage ADB TCP est activé\n" +
+                                        "  dans Paramètres → Développeur → Débogage USB\n" +
+                                        "  (ou Débogage sans fil sur cette ROM)");
+                                btnAdbLocal.setEnabled(true);
+                            }
+                        });
+                    }
+                });
+            }
+        });
 
         btnRunDiag.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 runDiagnostic();
+            }
+        });
+
+        // TEST 6 — Sonder le cluster via ADB
+        btnClusterProbeShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT,
+                        tvClusterProbeResult.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 6"));
+            }
+        });
+
+        btnClusterProbe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runClusterProbe();
+            }
+        });
+
+        // TEST 7 — Sonder autoservice (android.gui.BYDAutoServer)
+        btnAutoServiceShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT,
+                        tvAutoServiceResult.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 7"));
+            }
+        });
+
+        btnAutoServiceProbe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runAutoServiceProbe();
+            }
+        });
+
+        // TEST 8 — Activer la projection cluster
+        btnClusterActivShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT,
+                        tvClusterActivResult.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 8"));
+            }
+        });
+
+        btnClusterActiv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runClusterActivation();
+            }
+        });
+
+        // TEST 9 — Sonde VirtualDisplay
+        btnVdProbeShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT,
+                        tvVdProbeResult.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 9"));
+            }
+        });
+
+        btnVdProbe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runVirtualDisplayProbe();
+            }
+        });
+
+        // TEST 10 — Lancement sur display 1 (cluster)
+        btnDisplay1Share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_TEXT,
+                        tvDisplay1Result.getText().toString());
+                startActivity(android.content.Intent.createChooser(intent, "Partager résultat TEST 10"));
+            }
+        });
+
+        btnDisplay1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runDisplayOneLaunch();
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 8 : Activer la projection cluster (AutoContainerManager)
+    // -------------------------------------------------------------------------
+
+    private void runClusterActivation() {
+        btnClusterActiv.setEnabled(false);
+        tvClusterActivResult.setText("⏳ Activation cluster…");
+        AppLogger.log("DiagClusterActiv", "Activation projection démarrée");
+
+        AdbLocalClient.runClusterActivation(DiagActivity.this, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(final String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvClusterActivResult.setBackgroundColor(0xFF1A2A1A);
+                        tvClusterActivResult.setText(report);
+                        btnClusterActiv.setEnabled(true);
+                        AppLogger.log("DiagClusterActiv", report);
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvClusterActivResult.setBackgroundColor(0xFF2A1A1A);
+                        tvClusterActivResult.setText("\u274C " + error
+                                + "\n\n\u2192 Lancez d'abord TEST 5 pour autoriser la connexion ADB.");
+                        btnClusterActiv.setEnabled(true);
+                        AppLogger.log("DiagClusterActiv", "ERREUR: " + error);
+                    }
+                });
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 9 : Sonde VirtualDisplay (polling + registerCallback)
+    // -------------------------------------------------------------------------
+
+    private void runVirtualDisplayProbe() {
+        btnVdProbe.setEnabled(false);
+        tvVdProbeResult.setText("⏳ Sonde VirtualDisplay…");
+        AppLogger.log("DiagVDProbe", "Sonde VirtualDisplay démarrée");
+
+        AdbLocalClient.runVirtualDisplayProbe(DiagActivity.this, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(final String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        boolean found = report.contains("VIRTUAL TROUVÉ") || report.contains("⚡");
+                        tvVdProbeResult.setBackgroundColor(found ? 0xFF1A2A1A : 0xFF1A1A2A);
+                        tvVdProbeResult.setText(report);
+                        btnVdProbe.setEnabled(true);
+                        AppLogger.log("DiagVDProbe", report);
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvVdProbeResult.setBackgroundColor(0xFF2A1A1A);
+                        tvVdProbeResult.setText("\u274C " + error
+                                + "\n\n\u2192 Lancez d'abord TEST 5 pour autoriser la connexion ADB.");
+                        btnVdProbe.setEnabled(true);
+                        AppLogger.log("DiagVDProbe", "ERREUR: " + error);
+                    }
+                });
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 10 : Lancement sur display 1 (cluster) — insight WindowManagement
+    // -------------------------------------------------------------------------
+
+    private void runDisplayOneLaunch() {
+        btnDisplay1.setEnabled(false);
+        tvDisplay1Result.setText("⏳ Lancement display 1…");
+        AppLogger.log("DiagDisplay1", "Lancement display 1 démarré");
+
+        AdbLocalClient.runDisplayOneLaunch(DiagActivity.this, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(final String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        boolean ok = report.contains("Starting:") && !report.contains("Error");
+                        tvDisplay1Result.setBackgroundColor(ok ? 0xFF1A2A1A : 0xFF1A1A2A);
+                        tvDisplay1Result.setText(report);
+                        btnDisplay1.setEnabled(true);
+                        AppLogger.log("DiagDisplay1", report);
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvDisplay1Result.setBackgroundColor(0xFF2A1A1A);
+                        tvDisplay1Result.setText("\u274C " + error
+                                + "\n\n\u2192 Lancez d'abord TEST 5 pour autoriser la connexion ADB.");
+                        btnDisplay1.setEnabled(true);
+                        AppLogger.log("DiagDisplay1", "ERREUR: " + error);
+                    }
+                });
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 7 : Sonder autoservice (android.gui.BYDAutoServer)
+    // -------------------------------------------------------------------------
+
+    private void runAutoServiceProbe() {
+        btnAutoServiceProbe.setEnabled(false);
+        tvAutoServiceResult.setText("⏳ Connexion ADB…");
+        AppLogger.log("DiagAutoSvc", "Sondage autoservice démarré");
+
+        AdbLocalClient.runAutoServiceProbe(DiagActivity.this, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(final String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvAutoServiceResult.setBackgroundColor(0xFF1A2A1A);
+                        tvAutoServiceResult.setText(report);
+                        btnAutoServiceProbe.setEnabled(true);
+                        AppLogger.log("DiagAutoSvc", report);
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvAutoServiceResult.setBackgroundColor(0xFF2A1A1A);
+                        tvAutoServiceResult.setText("\u274C " + error
+                                + "\n\n\u2192 Lancez d'abord TEST 5 pour autoriser la connexion ADB.");
+                        btnAutoServiceProbe.setEnabled(true);
+                        AppLogger.log("DiagAutoSvc", "ERREUR: " + error);
+                    }
+                });
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 6 : Sonder le cluster via ADB
+    // -------------------------------------------------------------------------
+
+    private void runClusterProbe() {
+        btnClusterProbe.setEnabled(false);
+        tvClusterProbeResult.setText("⏳ Connexion ADB…");
+        AppLogger.log("DiagCluster", "Sondage cluster démarré");
+
+        AdbLocalClient.runClusterProbe(DiagActivity.this, new AdbLocalClient.Callback() {
+            @Override
+            public void onSuccess(final String report) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvClusterProbeResult.setBackgroundColor(0xFF1A2A1A);
+                        tvClusterProbeResult.setText(report);
+                        btnClusterProbe.setEnabled(true);
+                        AppLogger.log("DiagCluster", report);
+                    }
+                });
+            }
+            @Override
+            public void onError(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        tvClusterProbeResult.setBackgroundColor(0xFF2A1A1A);
+                        tvClusterProbeResult.setText("❌ " + error
+                                + "\n\n→ Lancez d'abord TEST 5 pour autoriser la connexion ADB.");
+                        btnClusterProbe.setEnabled(true);
+                        AppLogger.log("DiagCluster", "ERREUR: " + error);
+                    }
+                });
             }
         });
     }
@@ -148,15 +523,15 @@ public class DiagActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... voids) {
-            return isPortOpen("127.0.0.1", 5037, 1000)
-                    || isPortOpen("127.0.0.1", 5555, 1000);
+            // Port 5555 = adbd TCP sur la tablette (port 5037 = serveur ADB du PC hôte, hors-sujet ici)
+            return isPortOpen("127.0.0.1", 5555, 1000);
         }
 
         @Override
         protected void onPostExecute(Boolean adbOk) {
             updateResultView(tvAdbResult, adbOk,
                     adbOk
-                            ? "✅ Daemon ADB local accessible (port 5037 ou 5555)"
+                            ? "✅ Daemon ADB local accessible (port 5555)"
                             : "❌ ADB TCP non disponible — activer 'Débogage sans fil'");
             AppLogger.log("Diag", "Test 3 — ADB TCP: " + (adbOk ? "accessible" : "non disponible"));
 
