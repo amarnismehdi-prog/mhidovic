@@ -123,7 +123,8 @@
         <!-- Foreground Service : maintient la projection cluster en background -->
         <service
             android:name=".ClusterService"
-            android:exported="false"/>
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
 
     </application>
 

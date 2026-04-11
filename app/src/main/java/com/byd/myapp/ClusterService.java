@@ -1,6 +1,8 @@
 package com.byd.myapp;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -33,6 +35,7 @@ import com.byd.myapp.dashboard.DashboardLauncher;
 public class ClusterService extends Service implements DashboardDisplayHelper.Listener {
 
     private static final String TAG = "ClusterService";
+    private static final String CHANNEL_ID = "cluster_projection";
     private static final int NOTIF_ID = 1;
 
     // ── Listener pour MainActivity ──────────────────────────────────────────
@@ -172,19 +175,23 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     // ── Notification (obligatoire pour Foreground Service) ──────────────────
 
     private void createNotificationChannel() {
-        // NotificationChannel n'existe qu'à partir d'API 26.
-        // Le projet cible API 25 (DiLink 3.0) — pas de channel à créer.
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "Projection cluster",
+                NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription("Maintient l'affichage sur le cluster BYD");
+        channel.setShowBadge(false);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.createNotificationChannel(channel);
     }
 
-    @SuppressWarnings("deprecation")
     private Notification buildNotification(String text) {
         Intent tapIntent = new Intent(this, MainActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pi = PendingIntent.getActivity(this, 0, tapIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // NotificationCompat.Builder(context) — API 25 compatible
-        return new NotificationCompat.Builder(this)
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("BYD App")
                 .setContentText(text)
                 .setSmallIcon(android.R.drawable.ic_menu_compass)
@@ -195,8 +202,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     }
 
     private void updateNotification(String text) {
-        android.app.NotificationManager nm =
-            (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (nm != null) nm.notify(NOTIF_ID, buildNotification(text));
     }
 }

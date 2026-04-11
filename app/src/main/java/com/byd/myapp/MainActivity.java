@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity
 
         // Démarrer + binder au ClusterService (maintient la projection en background)
         Intent svcIntent = new Intent(this, ClusterService.class);
-        startService(svcIntent);
+        startForegroundService(svcIntent);
         bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
 
         mDashboardLauncher     = new DashboardLauncher(this); // temporaire jusqu'au bind

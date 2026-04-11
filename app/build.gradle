@@ -11,14 +11,14 @@ android {
         }
     }
 
-    // Le SDK BYD est basé sur Android API 25 (Android 7.1 Nougat)
-    compileSdkVersion 25
+    // La Seal EU tourne sur Android 10 (API 29) — DiLink 3.0
+    compileSdkVersion 29
     buildToolsVersion "25.0.0"
 
     defaultConfig {
         applicationId "com.byd.myapp"
-        minSdkVersion 25
-        targetSdkVersion 25
+        minSdkVersion 29
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
     }
@@ -58,12 +58,10 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:25.1.0'
-    implementation 'com.android.support:recyclerview-v7:25.1.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 
     // dadb — client ADB pur JVM (même bibliothèque utilisée par Overdrive)
-    // Permet de se connecter à adbd sur localhost:5555 et déclencher le popup d'autorisation
-    // Publié sous dev.mobile:dadb sur Maven Central
     implementation 'dev.mobile:dadb:1.2.7'
 }
