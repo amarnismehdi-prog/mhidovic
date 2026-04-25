@@ -175,4 +175,15 @@
     <string name="diag_sniffer_files_deleted">%1$d Sniffer file(s) deleted ✓</string>
     <string name="toast_files_deleted">%1$d file(s) deleted</string>
     <string name="toast_experimental">Experimental — not functional\n(app_process inaccessible from uid=10100)</string>
+
+    <!-- DiagActivity — killAndRestartDaemon -->
+    <string name="diag_kill_restart_in_progress">Kill + restart in progress…</string>
+    <string name="diag_kill_ok_restarting">Kill OK — restarting…</string>
+    <string name="diag_daemon_restarted">MirrorDaemon restarted — check log in 5s</string>
+    <string name="toast_daemon_restarted">MirrorDaemon restarted (clean)</string>
+    <string name="diag_kill_failed">Kill failed: %1$s</string>
+
+    <!-- AppLogger -->
+    <string name="share_log_title">Share log…</string>
+    <string name="share_report_title">Share report…</string>
 </resources>

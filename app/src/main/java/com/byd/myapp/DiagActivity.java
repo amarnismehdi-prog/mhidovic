@@ -721,22 +721,22 @@ public class DiagActivity extends AppCompatActivity {
     }
 
     private void killAndRestartDaemon() {
-        tvDaemonScanResult.setText("Kill + restart in progress…");
+        tvDaemonScanResult.setText(getString(R.string.diag_kill_restart_in_progress));
         tvDaemonScanResult.setTextColor(0xFFFFAB40);
         AdbLocalClient.killMirrorDaemon(this, new AdbLocalClient.Callback() {
             @Override public void onSuccess(String msg) {
-                runOnUiThread(() -> tvDaemonScanResult.setText("Kill OK — relancement…"));
+                runOnUiThread(() -> tvDaemonScanResult.setText(getString(R.string.diag_kill_ok_restarting)));
                 AdbLocalClient.startMirrorDaemon(DiagActivity.this);
                 runOnUiThread(() -> {
-                    tvDaemonScanResult.setText("MirrorDaemon restarted — check log in 5s");
+                    tvDaemonScanResult.setText(getString(R.string.diag_daemon_restarted));
                     tvDaemonScanResult.setTextColor(0xFF69F0AE);
                     android.widget.Toast.makeText(DiagActivity.this,
-                            "MirrorDaemon restarted (clean)", android.widget.Toast.LENGTH_SHORT).show();
+                            getString(R.string.toast_daemon_restarted), android.widget.Toast.LENGTH_SHORT).show();
                 });
             }
             @Override public void onError(String error) {
                 runOnUiThread(() -> {
-                    tvDaemonScanResult.setText("Kill failed: " + error);
+                    tvDaemonScanResult.setText(getString(R.string.diag_kill_failed, error));
                     tvDaemonScanResult.setTextColor(0xFFFF5252);
                 });
             }

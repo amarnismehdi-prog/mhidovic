@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
+import com.byd.myapp.R;
+
 import androidx.core.content.FileProvider;
 
 import java.io.File;
@@ -230,7 +232,7 @@ public class AppLogger {
             intent.setType("text/plain");
             intent.putExtra(Intent.EXTRA_TEXT, content);
         }
-        context.startActivity(Intent.createChooser(intent, "Share log…"));
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_log_title)));
     }
 
     public static void shareWithReport(Context context, String reportText) {
@@ -243,7 +245,7 @@ public class AppLogger {
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_SUBJECT, "DashCast — Report + Log");
         intent.putExtra(Intent.EXTRA_TEXT, combined);
-        context.startActivity(Intent.createChooser(intent, "Share report…"));
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_report_title)));
     }
 
     /**
