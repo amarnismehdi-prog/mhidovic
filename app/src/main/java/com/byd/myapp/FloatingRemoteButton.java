@@ -192,7 +192,7 @@ public class FloatingRemoteButton extends Service {
 
         Notification notif = new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_menu_info_details)
-                .setContentTitle("MyBYDApp")
+                .setContentTitle("DashCast")
                 .setContentText("Tap pour revenir sur l'app")
                 .setContentIntent(pi)
                 .setOngoing(true)

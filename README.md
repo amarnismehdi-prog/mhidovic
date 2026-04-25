@@ -1,4 +1,4 @@
-# MyBYDApp — BYD Cluster Launcher & Mirror
+# DashCast — BYD Cluster Launcher & Mirror
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![API 29](https://img.shields.io/badge/API-29%20(Android%2010)-green.svg)](https://developer.android.com/about/versions/10)
@@ -174,7 +174,7 @@ See [Build requirements](#build-requirements) below.
 2. Sideload onto the infotainment unit:
 ```bash
 adb connect <car-ip>:5555
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/DashCast-v0.1.1-alpha-debug.apk
 ```
 3. Launch the app and run **TEST 1** (Diagnostic) to grant `pm grant` permissions
 
@@ -239,9 +239,9 @@ The `app/build.gradle` signing config applies this keystore for both debug and r
 ## Build
 
 ```bash
-cd MyBYDApp
+cd MyBYDApp   # repo folder name
 ./gradlew assembleDebug
-# APK → app/build/outputs/apk/debug/app-debug.apk
+# APK → app/build/outputs/apk/debug/DashCast-v0.1.1-alpha-debug.apk
 ```
 
 ---
@@ -340,7 +340,7 @@ Freedom returns immediately without creating the VirtualDisplay.
 ### Retrieve logs without USB cable
 
 ```bash
-adb pull /sdcard/Android/data/com.byd.myapp/files/
+adb pull /sdcard/Android/data/com.byd.myapp/files/  # package ID unchanged
 ```
 
 ###  KQL queries

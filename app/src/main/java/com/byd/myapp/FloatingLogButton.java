@@ -192,7 +192,7 @@ public class FloatingLogButton extends Service {
 
         Notification notif = new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_menu_info_details)
-                .setContentTitle("MyBYDApp")
+                .setContentTitle("DashCast")
                 .setContentText("Journal actif — tap pour ouvrir")
                 .setContentIntent(pi)
                 .setOngoing(true)

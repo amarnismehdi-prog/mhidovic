@@ -2,7 +2,7 @@
     <string name="app_name">DashCast</string>
 
     <!-- WelcomeActivity -->
-    <string name="welcome_title">BYD Auto App</string>
+    <string name="welcome_title">DashCast</string>
     <string name="welcome_subtitle">Dashboard Controller</string>
     <string name="btn_lang_fr">🇫🇷  Français</string>
     <string name="btn_lang_en">🇬🇧  English</string>

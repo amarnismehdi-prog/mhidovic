@@ -215,7 +215,7 @@ public class AppLogger {
      */
     public static void share(Context context) {
         Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.putExtra(Intent.EXTRA_SUBJECT, "MyBYDApp — Log");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "DashCast — Log");
         File logFile = saveToFile(context);
         if (logFile != null) {
             Uri uri = FileProvider.getUriForFile(
@@ -241,7 +241,7 @@ public class AppLogger {
                 + get();
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_SUBJECT, "MyBYDApp — Report + Log");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "DashCast — Report + Log");
         intent.putExtra(Intent.EXTRA_TEXT, combined);
         context.startActivity(Intent.createChooser(intent, "Share report…"));
     }
@@ -270,7 +270,7 @@ public class AppLogger {
         }
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_SUBJECT, "MyBYDApp — " + prefix);
+        intent.putExtra(Intent.EXTRA_SUBJECT, "DashCast — " + prefix);
         if (fileOk) {
             Uri uri = FileProvider.getUriForFile(
                     context, context.getPackageName() + ".fileprovider", outFile);

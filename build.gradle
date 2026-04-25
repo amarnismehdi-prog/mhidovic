@@ -1,4 +1,4 @@
-// Top-level build file for BYD Auto Application
+// Top-level build file for DashCast
 buildscript {
     repositories {
         google()
