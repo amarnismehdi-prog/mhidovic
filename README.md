@@ -276,8 +276,9 @@ BYDAppLog_CL | where Tag_s in ("ClusterMirrorManager","AdbLocalClient","ClusterM
 
 | Version | versionCode | Summary |
 |---------|-------------|---------|
-| **2.52** | 155 | **🎉 Mirror fully working** — TextureView (SurfaceFlinger as producer), hardwareAccelerated |
-| 2.51 | 154 | SurfaceView → TextureView migration (`new Surface(SurfaceTexture)`) |
+| **0.1.0-alpha** | 1 | First public release — cluster mirror working (image + touch), TextureView |
+| *(internal 2.52)* | 155 | **🎉 Mirror fully working** — TextureView (SurfaceFlinger as producer), hardwareAccelerated |
+| *(internal 2.51)* | 154 | SurfaceView → TextureView migration (`new Surface(SurfaceTexture)`) |
 | **2.17** | 122 | Bugfix: Attach click listeners to sniffer & daemon buttons in DiagActivity |
 | **2.16** | 121 | Added Headless System Sniffer (logcat, am monitor, dumpsys via ADB) with Export button |
 | **2.15** | 120 | Fix native SurfaceControl mirror restoration |
