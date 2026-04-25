@@ -267,13 +267,33 @@ cd MyBYDApp
 - Transaction `#2` = `sendInfo(int type, int infoInt, String infoStr)`
 - ADB relay: `service call AutoContainer 2 i32 1000 i32 <cmd> s16 ""`
 
+### Projection control
+
 | cmd | Action | Confirmed |
 |-----|--------|---------|
-| 30 | Cluster 12.3" Seal EU | ✅ 16/04/2026 |
-| 16 | Qt standby (enable projection) | ✅ 16/04/2026 |
-| 18 | Close projection | ✅ 16/04/2026 |
-| 0  | Refresh Qt video stream | ✅ |
+| 16 | Qt standby — releases the cluster surface for our app (全屏投屏开启) | ✅ 16/04/2026 |
+| 18 | Close projection — re-enables Qt stream (投屏关闭) | ✅ 16/04/2026 |
+| 0  | Refresh Qt video stream — Qt resumes (主机恢复仪表视频流) | ✅ |
 | 1  | **⛔ DO NOT USE** — disconnects Qt entirely (destroys display 1) | — |
+
+### Cluster display size
+
+The instrument cluster physical size must be configured before launching any app,
+otherwise the resolution is wrong (ADAS stretching, wrong DPI).
+
+| cmd | Screen size | Model |
+|-----|------------|-------|
+| 29  | 8.8" | BYD Han / Tang (older models) |
+| 30  | 12.3" | **BYD Seal EU 2024** (default — use this) | 
+| 31  | 10.25" | Other BYD models |
+
+```bash
+# Example — force Seal EU 12.3" mode:
+adb shell service call AutoContainer 2 i32 1000 i32 30 s16 ""
+```
+
+> This command is sent automatically at the start of the cluster activation sequence (`sendInfo(1000, 30)`).
+> Use **TEST 3** in DiagActivity to cycle through sizes manually.
 
 ---
 
