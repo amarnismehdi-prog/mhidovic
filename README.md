@@ -2,14 +2,17 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![API 29](https://img.shields.io/badge/API-29%20(Android%2010)-green.svg)](https://developer.android.com/about/versions/10)
+[![Status: Alpha](https://img.shields.io/badge/Status-Alpha-red.svg)](CHANGELOG.md)
 
 Android application for **BYD Seal EU** (DiLink 3.0 — Android 10) to push any installed app
 onto the instrument cluster display, control it via a real-time touch mirror, and diagnose
 BYD APIs.
 
 > **Tested on**: BYD Seal EU 2024 — DiLink 3.0 (XDJA/Qualcomm 6125F) — Android 10 (API 29)
->
-> ⚠️ This is a **research/hobbyist project**. Use at your own risk.
+
+> [!WARNING]
+> **Alpha software** — This project is in early alpha. Expect bugs, incomplete features,
+> and breaking changes between releases. Use at your own risk.
 > The authors are not responsible for any damage to your vehicle's infotainment system.
 
 ---
@@ -274,29 +277,11 @@ BYDAppLog_CL | where Tag_s in ("ClusterMirrorManager","AdbLocalClient","ClusterM
 
 ## Version history
 
-| Version | versionCode | Summary |
-|---------|-------------|---------|
-| **0.1.0-alpha** | 1 | First public release — cluster mirror working (image + touch), TextureView |
-| *(internal 2.52)* | 155 | **🎉 Mirror fully working** — TextureView (SurfaceFlinger as producer), hardwareAccelerated |
-| *(internal 2.51)* | 154 | SurfaceView → TextureView migration (`new Surface(SurfaceTexture)`) |
-| **2.17** | 122 | Bugfix: Attach click listeners to sniffer & daemon buttons in DiagActivity |
-| **2.16** | 121 | Added Headless System Sniffer (logcat, am monitor, dumpsys via ADB) with Export button |
-| **2.15** | 120 | Fix native SurfaceControl mirror restoration |
-| **2.14** | 119 | Freedom proxy injected: `app_process` pseudo-daemon + diagnostics IPC testing |
-| **2.09** | 114 | Perf & Sanity checks: `AppLogger` O(1) ArrayDeque, `ExecutorService` in `AdbLocalClient` |
-| **2.08** | 113 | Fix double `startFreedom()` race condition, `freedomJustStarted` flag |
-| **2.07** | 112 | Sanity fixes: `AsyncTask`→`Executors`, adapter O(1) HashMap index |
-| **2.06** | 111 | Freedom state check at startup (NOT_INSTALLED / INACTIVE / ACTIVE) |
-| **2.05** | 110 | Mirror screencap fallback, persist `PREF_MAIN_PKG`, split bounds via extras |
-| **2.04** | 109 | Dead code removal + `resolveLayerStack()` fix (`displayId<<16`) |
-| **2.03** | 108 | `unlockHiddenApis()` VMRuntime + `createDisplay` fallback `secure=true` |
-| **2.02** | 107 | Fix Freedom (activity name + fission check), split relaunch bounds |
-| **2.01** | 106 | `startFreedom()`: write `navigationType=1` via ObjectOutputStream |
-| **2.00** | 105 | Freedom headless (auto foreground return), ClusterService foreground refactor |
-| 1.94 | 99 | Cluster split 50/50 (`launchTrampolineWithBounds`) |
-| 1.91 | 96 | Real-time SurfaceControl mirror (replaces bitmap screenshot), Freedom reset 全屏 |
-| 1.73 | 74 | Exported trampoline + ADB uid=2000 launch (bypasses INTERNAL_SYSTEM_WINDOW) |
-| 1.46 | 47 | cmd30 before cmd16 sequence — fixes ADAS stretching |
+| Version | Summary |
+|---------|---------|
+| **0.1.0-alpha** | First public release — cluster mirror working (image + touch) |
+
+Full internal development history: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
