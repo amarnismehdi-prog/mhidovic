@@ -89,7 +89,8 @@ app/src/main/java/com/byd/myapp/
 ### Cluster activation
 
 ```
-sendInfo(1000, 30)   → switch cluster to Seal EU 12.3" mode (correct resolution, no ADAS stretching)
+sendInfo(1000, 30)   → switch the cluster to the Qt surface reserved for 12.3" screens —
+                       this fixes the ADAS window layout issue that occurs on 10.25" panels
 wait ~1 s
 sendInfo(1000, 16)   → Qt standby (全屏投屏开启) — releases the surface for our app
 wait ~2 s
