@@ -14,6 +14,9 @@ BYD APIs.
 > **Alpha software** — This project is in early alpha. Expect bugs, incomplete features,
 > and breaking changes between releases. Use at your own risk.
 > The authors are not responsible for any damage to your vehicle's infotainment system.
+>
+> **Freedom (`com.xdja.clusterdemo`) must be installed and active on your DiLink system.**
+> The app does not work without it in the current alpha.
 
 ---
 
@@ -177,12 +180,18 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 > If you don't have the car's IP, the app can also be installed via USB when ADB USB debugging is enabled (developer options).
 
+### 4. Freedom (`com.xdja.clusterdemo`) — **required**
+
+Freedom is a third-party app that creates the cluster VirtualDisplay (`fission_*`) at boot.
+**The app will not work without Freedom installed and active on your DiLink system.**
+There is no supported fallback in the current alpha.
+
 ---
 
 ## Known issues (alpha)
 
 - **Reliability**: The cluster activation sequence may fail on the first attempt — retry
-- **Freedom dependency**: If Freedom (`com.xdja.clusterdemo`) is not installed, `display=1` is used as a hardcoded fallback, which may not always work
+- **Freedom dependency**: **Freedom (`com.xdja.clusterdemo`) is required** — there is no working fallback in the current alpha
 - **App persistence**: Apps launched on the cluster may return to the main display after a phone call or ADAS event (Qt reclaims the surface)
 - **Split 50/50**: Experimental — may fail depending on target app window mode
 - ** export**: Optional feature requiring a personal remote log analytics workspace (configure `local.properties`)
@@ -268,7 +277,10 @@ cd MyBYDApp
 
 ---
 
-## Freedom (com.xdja.clusterdemo)
+## Freedom (`com.xdja.clusterdemo`) — required dependency
+
+> **Freedom must be installed and active.** The app depends on it to create the cluster
+> VirtualDisplay (`fission_*`). Without Freedom, the cluster surface is not available.
 
 Freedom state is **checked at startup** before the cluster activation sequence.
 `ClusterService.checkAndStartWithFreedom()` runs `AdbLocalClient.checkFreedomState()` and:
@@ -277,7 +289,7 @@ Freedom state is **checked at startup** before the cluster activation sequence.
 |-------|--------|
 | `ACTIVE` — VirtualDisplay `fission_*` present | Proceed directly to `sendInfo(30+16)` |
 | `INACTIVE` — installed but VirtualDisplay absent | `startFreedom()` (force-stop + write `navigationType=1` + `am start`) → wait 2 s → activate |
-| `NOT_INSTALLED` | Proceed anyway (fallback to display id=1 hardcoded) |
+| `NOT_INSTALLED` | **App will not function** — cluster activation aborted |
 
 The current state is displayed in the main status bar (`tvDashboardStatus`).
 
