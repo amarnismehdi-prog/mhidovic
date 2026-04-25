@@ -25,3 +25,8 @@ captures/
 .cxx/
 *.apk
 *.aab
+
+# ── Internal dev notes (kept in parent folder, not in repo) ─
+CONTEXT.md
+MIRROR_DEV_JOURNAL.md
+FREEDOM_INJECTION_STRATEGY.md
