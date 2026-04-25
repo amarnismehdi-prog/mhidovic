@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BYD Auto App</string>
+    <string name="app_name">DashCast</string>
 
     <!-- WelcomeActivity -->
     <string name="welcome_title">BYD Auto App</string>

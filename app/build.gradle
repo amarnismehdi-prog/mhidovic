@@ -70,7 +70,7 @@ android {
 
     android.applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            outputFileName = "MyBYDApp-v${variant.versionName}-${variant.buildType.name}.apk"
+            outputFileName = "DashCast-v${variant.versionName}-${variant.buildType.name}.apk"
         }
     }
 }
