@@ -1,10 +1,16 @@
 # MyBYDApp — BYD Cluster Launcher & Mirror
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![API 29](https://img.shields.io/badge/API-29%20(Android%2010)-green.svg)](https://developer.android.com/about/versions/10)
+
 Android application for **BYD Seal EU** (DiLink 3.0 — Android 10) to push any installed app
 onto the instrument cluster display, control it via a real-time touch mirror, and diagnose
 BYD APIs.
 
 > **Tested on**: BYD Seal EU 2024 — DiLink 3.0 (XDJA/Qualcomm 6125F) — Android 10 (API 29)
+>
+> ⚠️ This is a **research/hobbyist project**. Use at your own risk.
+> The authors are not responsible for any damage to your vehicle's infotainment system.
 
 ---
 
@@ -15,7 +21,7 @@ BYD APIs.
 | 1 | **App list** | All installed apps (sorted RecyclerView) |
 | 2 | **→ Cluster** | Push an app to the cluster (ADB trampoline uid=2000 + display=1 FREEFORM) |
 | 3 | **→ Main screen** | Move an app from the cluster back to display 0 |
-| 4 | **Touch mirror** | Real-time SurfaceView of the cluster via `SurfaceControl.createDisplay()` + touch forwarding |
+| 4 | **Touch mirror** | Real-time TextureView of the cluster via `SurfaceControl.createDisplay()` + touch forwarding |
 | 5 | **Split 50/50** | Two apps side by side on the cluster (force-stop + relaunch with `--bounds`) |
 | 6 | **Remote control** | ←/⌂/↑/↓/Vol+/Vol− buttons via `InputManager.injectInputEvent()` |
 | 7 | **Restore BYD** | `sendInfo(18+0)` → Qt regains control of the cluster |
@@ -30,18 +36,22 @@ BYD APIs.
 ---
 
 
-## 🔓 Freedom v1.9 IPC Cracked & Daemon Proxy
+## 🔓 WindowManagement v1.2 — Reverse Engineering
 
-In the latest major breakthrough, the **anti-tamper obfuscation** of the `Freedom v1.9` / `com.xdja.clusterdemo` application has been completely reverse-engineered. 
+The **anti-tamper obfuscation** of the `WindowManagement v1.2` third-party app has been
+completely reverse-engineered.
 
-* **The Honeypot**: The original APK included a decoy `DES/ECB/NoPadding` encryption block deliberately seeded with an invalid 7-byte key (`"decrypt"`) designed to throw a native `InvalidKeyException` on Android and waste reverse-engineering efforts.
-* **The Reality**: The actual strings are obfuscated through a complex character-substitution map converting back to standard Base64.
-* **The Result**: We extracted all hidden root/ADB daemon commands (e.g., `--nice-name=ClusterDemoProcess CommunicationProcessKt`) and Inter-Process Communication (IPC) intents (like `ACTION_cluster_demo_process_started`).
+* **Obfuscation scheme**: Unicode invisible characters are used as a substitution table
+  (class `C0854a.f1372c`) mapping each character to a Base64 character, then Base64-decoded
+  to the real UTF-8 string. An optional DES/ECB layer (key `"decrypt"`) is used for a few
+  bootstrap strings.
+* **Result**: All hidden Binder method names were extracted:
+  `openTransaction`, `setDisplaySurface`, `setDisplayProjection`,
+  `setDisplayLayerStack`, `closeTransaction`.
+* **Our implementation** uses the same static `SurfaceControl` API, confirming compatibility
+  with DiLink 3.0.
 
-### Diagnostic Features added:
-The `DiagActivity` now features a **Pseudo-Daemon (Freedom IPC)** test button. This executes `Runtime.getRuntime().exec()` simulating the `app_process` injection exactly as Freedom does it, proving that we can bypass the third-party app entirely and run our own native code autonomously in the background without requiring root permissions on the BYD system.
-
-For full technical details, see `FREEDOM_INJECTION_STRATEGY.md` and `FREEDOM_HIDDEN_SECRETS.md`.
+For full technical details, see [`doc_api/DEOBFUSCATION_WindowManagement.md`](../doc_api/DEOBFUSCATION_WindowManagement.md).
 
 ---
 
@@ -62,9 +72,8 @@ app/src/main/java/com/byd/myapp/
 ├── FloatingLogButton.java      — Floating overlay (DEBUG builds only)
 ├── LocaleHelper.java           — Language persistence (SharedPreferences)
 ├── daemon/
-│   └── MirrorDaemon.java        — Core proxy class mirroring Freedom behavior
+│   └── MirrorDaemon.java        — Core proxy class mirroring cluster display
 └── dashboard/
-    ├── BydVideoMirrorClient.java    — Proxy connection intercepting physical video feed
     ├── ClusterManager.java          — Cluster activation sequence (sendInfo 30+16, Freedom fallback)
     ├── DashboardDisplayHelper.java  — Cluster VirtualDisplay detection (DisplayManager + polling)
     ├── DashboardLauncher.java       — Launch app on main display (setLaunchDisplayId)
@@ -109,15 +118,15 @@ inherits the source display.
 VMRuntime.setHiddenApiExemptions(["Landroid/", "Lcom/android/", "Ljava/lang/"]);
 
 // 2. Create a virtual mirror display
-IBinder token = SurfaceControl.createDisplay("byd_cluster_mirror", false);
-// fallback secure=true if null (WindowManagement v1.2 uses true on DiLink 3.0)
+IBinder token = SurfaceControl.createDisplay("byd_cluster_mirror", true);
+// secure=true required on DiLink 3.0 (same as WindowManagement v1.2)
 
-// 3. Project the cluster display onto the SurfaceView
-SurfaceControl.Transaction tx = new SurfaceControl.Transaction();
-tx.setDisplaySurface(token, surfaceViewSurface);
-tx.setDisplayLayerStack(token, displayId << 16);  // SurfaceFlinger Android 10 convention
-tx.setDisplayProjection(token, ROTATION_0, srcRect, dstRect);
-tx.apply();
+// 3. Project the cluster display onto the TextureView surface
+SurfaceControl.openTransaction();
+SurfaceControl.setDisplaySurface(token, new Surface(textureView.getSurfaceTexture()));
+SurfaceControl.setDisplayLayerStack(token, clusterLayerStack);
+SurfaceControl.setDisplayProjection(token, 0, srcRect, dstRect);
+SurfaceControl.closeTransaction();
 ```
 
 Touch: `MotionEvent.setDisplayId(clusterDisplayId)` + `InputManager.injectInputEvent()`.
@@ -152,8 +161,8 @@ This project requires BYD SDK v1.0.5 (modified `android.jar` with `android.hardw
 
 ```properties
 sdk.dir=/path/to/sdk/SDK_v1.0.5/byd-auto_sdk_windows
-=<remote log analytics workspace ID>
-=< primary key>
+
+
 ```
 
 ### Signing
@@ -253,7 +262,7 @@ Freedom returns immediately without creating the VirtualDisplay.
 adb pull /sdcard/Android/data/com.byd.myapp/files/
 ```
 
-###  KQL queries (workspace `law-byd-app`, francecentral)
+###  KQL queries
 
 ```kql
 BYDAppLog_CL | order by TimeGenerated desc | take 200
@@ -267,22 +276,38 @@ BYDAppLog_CL | where Tag_s in ("ClusterMirrorManager","AdbLocalClient","ClusterM
 
 | Version | versionCode | Summary |
 |---------|-------------|---------|
+| **2.52** | 155 | **🎉 Mirror fully working** — TextureView (SurfaceFlinger as producer), hardwareAccelerated |
+| 2.51 | 154 | SurfaceView → TextureView migration (`new Surface(SurfaceTexture)`) |
 | **2.17** | 122 | Bugfix: Attach click listeners to sniffer & daemon buttons in DiagActivity |
 | **2.16** | 121 | Added Headless System Sniffer (logcat, am monitor, dumpsys via ADB) with Export button |
-| **2.15** | 120 | Fix native SurfaceControl mirror restoration (uncomment disabled block + daemon delegation) |
-| **2.14** | 119 | Freedom proxy injected: `app_process` pseudo-daemon to completely bypass Freedom APK + diagnostics IPC testing |
-| **2.09** | 114 | Perf & Sanity checks: `AppLogger` O(1) ArrayDeque allocation, replaced `new Thread()` with `ExecutorService` in `AdbLocalClient`, cleaned up dead logic |
-| **2.08** | 113 | Fix double `startFreedom()` race condition: `freedomJustStarted` flag propagated `ClusterService→DashboardDisplayHelper→ClusterManager`; `sendActivationSequence()` extracted as class-level method (was illegally nested in anonymous Callback); `DashboardDisplayHelper.start(boolean)` + `start()` no-arg overload |
-| **2.07** | 112 | Sanity fixes: `AsyncTask`→`Executors`, adapter O(1) HashMap index, `ThreadLocal` `SimpleDateFormat`, `WeakReference` screenshot loop guard |
-| **2.06** | 111 | Freedom state check at startup (`checkFreedomState` — NOT_INSTALLED / INACTIVE / ACTIVE), status bar feedback, `startFreedom(skipDisplayCheck)` to avoid redundant ADB round-trip |
-| **2.05** | 110 | Mirror screencap fallback (`captureClusterDisplay` via ADB shell), remove `savedItem`/`PREF_LAST_APP`, persist `PREF_MAIN_PKG` across recreations, split bounds via `--ei` extras + `ActivityOptions.setLaunchBounds()` |
-| **2.04** | 109 | Sanity check: dead code removal + `resolveLayerStack()` fix (`displayId<<16`) |
+| **2.15** | 120 | Fix native SurfaceControl mirror restoration |
+| **2.14** | 119 | Freedom proxy injected: `app_process` pseudo-daemon + diagnostics IPC testing |
+| **2.09** | 114 | Perf & Sanity checks: `AppLogger` O(1) ArrayDeque, `ExecutorService` in `AdbLocalClient` |
+| **2.08** | 113 | Fix double `startFreedom()` race condition, `freedomJustStarted` flag |
+| **2.07** | 112 | Sanity fixes: `AsyncTask`→`Executors`, adapter O(1) HashMap index |
+| **2.06** | 111 | Freedom state check at startup (NOT_INSTALLED / INACTIVE / ACTIVE) |
+| **2.05** | 110 | Mirror screencap fallback, persist `PREF_MAIN_PKG`, split bounds via extras |
+| **2.04** | 109 | Dead code removal + `resolveLayerStack()` fix (`displayId<<16`) |
 | **2.03** | 108 | `unlockHiddenApis()` VMRuntime + `createDisplay` fallback `secure=true` |
-| **2.02** | 107 | Fix Freedom (activity name + fission check), split relaunch bounds, → Cluster btn, mirror placeholder |
+| **2.02** | 107 | Fix Freedom (activity name + fission check), split relaunch bounds |
 | **2.01** | 106 | `startFreedom()`: write `navigationType=1` via ObjectOutputStream |
 | **2.00** | 105 | Freedom headless (auto foreground return), ClusterService foreground refactor |
 | 1.94 | 99 | Cluster split 50/50 (`launchTrampolineWithBounds`) |
 | 1.91 | 96 | Real-time SurfaceControl mirror (replaces bitmap screenshot), Freedom reset 全屏 |
 | 1.73 | 74 | Exported trampoline + ADB uid=2000 launch (bypasses INTERNAL_SYSTEM_WINDOW) |
 | 1.46 | 47 | cmd30 before cmd16 sequence — fixes ADAS stretching |
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+> **Note on dependencies**: This project requires **BYD SDK v1.0.5** (proprietary) which
+> is NOT included in this repository and is NOT covered by the MIT license.
+> The BYD SDK contains a modified `android.jar` with `android.hardware.bydauto.*` APIs.
+> You must obtain it separately.
+>
+> Freedom (`com.xdja.clusterdemo`) and WindowManagement are third-party applications
+> (not BYD) whose behavior has been analyzed for interoperability purposes only.
 | 1.34 | 35 | TEST 10 validated in vehicle ✅ |
