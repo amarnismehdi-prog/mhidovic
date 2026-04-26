@@ -1,4 +1,4 @@
-> **À propos de l'auteur** — Je ne suis pas développeur de métier, mais je travaille dans l'IT avec une bonne compréhension du développement logiciel. Ce projet a été réalisé en **vibe coding** avec l'aide de l'IA (GitHub Copilot / Claude), ce qui m'a permis de proposer cette application malgré l'absence d'expérience Android native. Le code reflète cette démarche : fonctionnel et orienté résultat, mais perfectible.
+> **About the author** — I am not a professional developer, but I work in IT with a solid understanding of software development. This project was built through **vibe coding** with AI assistance (GitHub Copilot / Claude), which allowed me to ship this app despite having no prior native Android experience. The code reflects that approach: functional and goal-oriented, but with room for improvement.
 
 ---
 
