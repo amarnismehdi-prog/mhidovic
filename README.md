@@ -236,7 +236,7 @@ The `app/build.gradle` signing config applies this keystore for both debug and r
 ```bash
 cd MyBYDApp   # repo folder name
 ./gradlew assembleDebug
-# APK → app/build/outputs/apk/debug/DashCast-v0.1.6-alpha-debug.apk
+# APK → app/build/outputs/apk/debug/DashCast-v0.1.5-alpha-debug.apk
 ```
 
 ---
@@ -349,10 +349,11 @@ adb pull /sdcard/Android/data/com.byd.myapp/files/  # package ID unchanged
 |---------|---------|
 | **0.1.0-alpha** | First public release — cluster mirror working (image + touch) |
 | **0.1.1-alpha** | Bug fixes, code sanity, README improvements |
-| **0.1.2-alpha** | EN translation, DashCast rename, new icon — device-validated || **0.1.3-alpha** | Full i18n (FR/EN/DE/IT/TR), string externalization |
+| **0.1.2-alpha** | EN translation, DashCast rename, new icon — device-validated |
+| **0.1.3-alpha** | Full i18n (FR/EN/DE/IT/TR), string externalization |
 | **0.1.4-alpha** | Fix touch offset bug in cluster mirror input forwarding |
-| **0.1.5-alpha** | Stability improvements |
-| **0.1.6-alpha** | TEST 7: cluster orientation control via `IWindowManager.freezeDisplayRotation` (no `wm size`) |
+| **0.1.5-alpha** | Stability improvements — **current public release** |
+
 Full internal development history: [CHANGELOG.md](CHANGELOG.md)
 
 ---
