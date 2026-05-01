@@ -38,6 +38,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     private static final String TAG = "ClusterService";
     private static final String CHANNEL_ID = "cluster_projection";
     private static final int NOTIF_ID = 1;
+    public static boolean sIsRunning = false;
 
     // ── Listener for MainActivity ───────────────────────────────────────────
     public interface Listener {
@@ -71,6 +72,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     @Override
     public void onCreate() {
         super.onCreate();
+        sIsRunning = true;
         mDisplayHelper  = new DashboardDisplayHelper(this, this);
         mLauncher       = new DashboardLauncher(this);
         mMirrorManager  = new ClusterMirrorManager();
@@ -113,6 +115,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     @Override
     public void onDestroy() {
         super.onDestroy();
+        sIsRunning = false;
         mListener = null;
         // Cancel all pending Runnables on mMainHandler BEFORE release():
         // launchOnDashboard (postDelayed 2s) could post a callback

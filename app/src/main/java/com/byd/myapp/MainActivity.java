@@ -345,15 +345,17 @@ public class MainActivity extends AppCompatActivity
                 attemptStartMirrorWithCurrentHolder();
             }
         } else if (!mBindRequested) {
-            // First start or after onDestroy: start + bind the service
-            mBindRequested = true;
-            tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
-            // Freedom is started automatically by ClusterManager.activateClusterDisplay()
-            // if the VirtualDisplay is not yet present — no need to launch it here
-            // (avoids a double force-stop/restart of Freedom during service initialization).
-            Intent svcIntent = new Intent(this, ClusterService.class);
-            startForegroundService(svcIntent);
-            bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
+            // Check if the service is already running (e.g. Activity re-opened)
+            if (ClusterService.sIsRunning) {
+                mBindRequested = true;
+                tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
+                Intent svcIntent = new Intent(this, ClusterService.class);
+                bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
+            } else {
+                // Feature requested: DO NOT start the service automatically.
+                // The cluster will only be activated when the user clicks 'Activate Cluster'.
+                AppLogger.d(TAG, "Not starting ClusterService automatically. Waiting for user action.");
+            }
         }
     }
 
@@ -923,43 +925,44 @@ public class MainActivity extends AppCompatActivity
                 + " displayId=" + (mClusterService != null ? mClusterService.getDisplayId() : "N/A"));
 
         if (!mServiceBound || mClusterService == null) {
-            // Service stopped (e.g., after stopProjection via kill app).
-            // Restart it: ClusterService.onCreate() → mDisplayHelper.start() → sendInfo(30+16).
-            // onClusterDisplayConnected() will fire → mPendingLaunchPackage consumed.
+            // Service stopped or not started yet.
+            // Start it: ClusterService.onCreate() → mDisplayHelper.start() → sendInfo(30+16).
+            // onClusterDisplayConnected() will fire and enable the button.
             if (!mBindRequested) {
                 mBindRequested = true;
                 Intent svcIntent = new Intent(this, ClusterService.class);
                 startForegroundService(svcIntent);
                 bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
             }
-                        tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
+            tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
+            // Button is re-enabled natively by onClusterDisplayConnected or onClusterDisplayDisconnected callbacks.
+        } else {
+            // Service already up → send ADB commands directly (manual re-activation)
+            AdbLocalClient.activateClusterDisplay(this, new AdbLocalClient.Callback() {
+                @Override
+                public void onSuccess(final String report) {
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            tvDashboardStatus.setText(getString(R.string.status_cluster_activated));
+                            btnActivateCluster.setEnabled(true);
+                            AppLogger.log(TAG, "activateCluster OK — " + report);
+                        }
+                    });
+                }
+                @Override
+                public void onError(final String error) {
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            tvDashboardStatus.setText(getString(R.string.status_disconnected));
+                            btnActivateCluster.setEnabled(true);
+                            Toast.makeText(MainActivity.this,
+                                    getString(R.string.toast_activation_failed, error), Toast.LENGTH_LONG).show();
+                            AppLogger.log(TAG, "activateCluster FAILED — " + error);
+                        }
+                    });
+                }
+            });
         }
-
-        // Service already bound → send ADB commands directly (manual re-activation)
-        AdbLocalClient.activateClusterDisplay(this, new AdbLocalClient.Callback() {
-            @Override
-            public void onSuccess(final String report) {
-                runOnUiThread(new Runnable() {
-                    @Override public void run() {
-                        tvDashboardStatus.setText(getString(R.string.status_cluster_activated));
-                        btnActivateCluster.setEnabled(true);
-                        AppLogger.log(TAG, "activateCluster OK — " + report);
-                    }
-                });
-            }
-            @Override
-            public void onError(final String error) {
-                runOnUiThread(new Runnable() {
-                    @Override public void run() {
-                        tvDashboardStatus.setText(getString(R.string.status_disconnected));
-                        btnActivateCluster.setEnabled(true);
-                        Toast.makeText(MainActivity.this,
-                                getString(R.string.toast_activation_failed, error), Toast.LENGTH_LONG).show();
-                        AppLogger.log(TAG, "activateCluster FAILED — " + error);
-                    }
-                });
-            }
-        });
     }
 
     /** Returns the sendInfo code for the screen size chosen in settings. */
