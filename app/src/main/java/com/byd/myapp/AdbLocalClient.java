@@ -233,8 +233,8 @@ public class AdbLocalClient {
     private static final String SNIFFER_GREP =
             "grep -E '[l]ogcat -v threadtime|[s]leep 30'";
     public static final String SNIFFER_KILL_CMD =
-            "ps -A | grep '[l]ogcat -v threadtime' | awk '{print $2}' | xargs -r kill -9 2>/dev/null; "
-            + "ps -A | grep '[s]leep 30' | awk '{print $2}' | xargs -r kill -9 2>/dev/null; "
+            "rm -f /data/local/tmp/.sniffer_run; "
+            + "for p in $(ps -A | awk '/[s]leep 15/ {print $2}; /[s]leep 5/ {print $2}; /[l]ogcat -v threadtime/ {print $2}; /[l]ogcat -b events/ {print $2}'); do kill -9 $p 2>/dev/null; done; "
             + "echo killed";
 
     /**
@@ -244,9 +244,9 @@ public class AdbLocalClient {
         sExecutor.execute(() -> {
             try (Dadb dadb = connect(context)) {
                 String logcatPs = safeOut(dadb.shell(
-                        "ps -A | grep '[l]ogcat -v threadtime' 2>&1").getAllOutput()).trim();
+                        "ps -A | grep -E '[l]ogcat -v threadtime|[l]ogcat -b events' 2>&1").getAllOutput()).trim();
                 String sleepPs = safeOut(dadb.shell(
-                        "ps -A | grep '[s]leep 30' 2>&1").getAllOutput()).trim();
+                        "ps -A | grep -E '[s]leep 15|[s]leep 5' 2>&1").getAllOutput()).trim();
                 boolean hasLogcat = !logcatPs.isEmpty();
                 boolean hasLoop   = !sleepPs.isEmpty();
                 String msg;
@@ -283,9 +283,9 @@ public class AdbLocalClient {
                 dadb.shell(SNIFFER_KILL_CMD);
                 Thread.sleep(600);
                 String logcatAfter = safeOut(dadb.shell(
-                        "ps -A | grep '[l]ogcat -v threadtime' 2>&1").getAllOutput()).trim();
+                        "ps -A | grep -E '[l]ogcat -v threadtime|[l]ogcat -b events' 2>&1").getAllOutput()).trim();
                 String sleepAfter = safeOut(dadb.shell(
-                        "ps -A | grep '[s]leep 30' 2>&1").getAllOutput()).trim();
+                        "ps -A | grep -E '[s]leep 15|[s]leep 5' 2>&1").getAllOutput()).trim();
                 boolean ok = logcatAfter.isEmpty() && sleepAfter.isEmpty();
                 String msg = ok ? "Sniffer stopped ✓" : "Processes still active: " + logcatAfter + " " + sleepAfter;
                 AppLogger.i(TAG, "killSniffer: " + msg);

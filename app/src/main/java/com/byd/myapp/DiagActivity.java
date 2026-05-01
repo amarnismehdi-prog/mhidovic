@@ -469,7 +469,7 @@ public class DiagActivity extends AppCompatActivity {
         // ── Enriched header (synchronous, creates the file) ──────────────────────
         // Clear the logcat buffer first to capture only future events.
         String headerCmd =
-            "logcat -c 2>/dev/null"
+            "logcat -c 2>/dev/null && touch /data/local/tmp/.sniffer_run"
             + " && echo '=========================================' > " + p
             + " && echo '===  BYD SNIFFER DUMP (ENHANCED)  ===' >> " + p
             + " && echo '=========================================' >> " + p
@@ -517,7 +517,7 @@ public class DiagActivity extends AppCompatActivity {
         // ── Periodic snapshots every 15s ────────────────────────────────
         // \$ → $ sent to the inner sh (date expands in sh -c)
         String snapshotCmd =
-            "while true; do sleep 15;"
+            "while [ -f /data/local/tmp/.sniffer_run ]; do sleep 15;"
             + " echo '' >> " + p + ";"
             + " echo '--- SNAPSHOT '\\$(date +%H:%M:%S)' ---' >> " + p + ";"
             + " dumpsys display 2>/dev/null | grep -A 2 -B 2 -E 'mDisplayId|mState|fission|virtual|cluster|qt' | head -15 >> " + p + ";"
@@ -528,7 +528,7 @@ public class DiagActivity extends AppCompatActivity {
 
         // ── Intent & Event Background Sniffing ────────────────────────────
         String eventCmd = "logcat -b events -v time | grep -iE 'byd|xdja|qt|cluster|sendinfo' >> " + p + " 2>/dev/null";
-        String inputCmd = "while true; do sleep 5; dumpsys input 2>/dev/null | grep -iE 'FocusedWindow|TouchedWindow|byd|cluster' | head -5 >> " + p + "; done";
+        String inputCmd = "while [ -f /data/local/tmp/.sniffer_run ]; do sleep 5; dumpsys input 2>/dev/null | grep -iE 'FocusedWindow|TouchedWindow|byd|cluster' | head -5 >> " + p + "; done";
 
         String fullCmd = headerCmd
                 + " && nohup sh -c \"" + logcatCmd + "\" &"
