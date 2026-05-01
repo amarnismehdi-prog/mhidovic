@@ -244,16 +244,23 @@ public class MainActivity extends AppCompatActivity
             mAdapter.setMainPackage(mMainDisplayPkg);
         }
 
+        // TextureView optimizations
+        clusterMirror.setOpaque(true);  // No alpha blending overhead
+        clusterMirror.setLayerType(View.LAYER_TYPE_HARDWARE, null); // Force hardware layer
+
         // TextureView.SurfaceTextureListener: starts/stops the mirror when the SurfaceTexture is available.
         // Surface(SurfaceTexture) → SF is the PRODUCER, TextureView renders each frame produced by SF.
         clusterMirror.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
+                // Pre-size the buffer to the view dimensions to limit memory footprint and let SF scale it
+                st.setDefaultBufferSize(w, h);
                 mMirrorSurface = new Surface(st);
                 attemptStartMirrorWithCurrentHolder();
             }
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) {
+                st.setDefaultBufferSize(w, h);
                 mMirrorSurface = new Surface(st);
                 attemptStartMirrorWithCurrentHolder();
             }
