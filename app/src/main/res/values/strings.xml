@@ -105,7 +105,6 @@
     <string name="diag_subtitle">Vérifie quel mécanisme est disponible pour envoyer des apps sur l\'écran dashboard (instrument cluster).</string>
     <string name="diag_test1_title">TEST 1 — Connexion ADB locale (dadb)</string>
     <string name="diag_test1_desc">Se connecte au daemon ADB de la tablette sur localhost:5555 (même mécanisme qu\'Overdrive). Au premier lancement, un popup «Autoriser le débogage USB ?» apparaît — appuyez AUTORISER. Une fois autorisé, tente de débloquer toutes les permissions BYDAUTO_*_GET refusées via pm grant.</string>
-    <string name="btn_adb_local_label">Connexion ADB locale + Grant permissions</string>
     <string name="diag_press_hint">Appuyez sur le bouton pour lancer.</string>
     <string name="diag_share_result1_btn">Partager le résultat TEST 1</string>
     <string name="diag_test2_title">TEST 2 — Restauration cluster</string>

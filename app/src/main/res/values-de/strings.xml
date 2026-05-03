@@ -106,7 +106,6 @@
     <string name="diag_subtitle">Prüft, welcher Mechanismus verfügbar ist, um Apps auf den Dashboard-Bildschirm (Instrument Cluster) zu senden.</string>
     <string name="diag_test1_title">TEST 1 — Lokale ADB-Verbindung (dadb)</string>
     <string name="diag_test1_desc">Verbindet sich mit dem ADB-Daemon der Tablette auf localhost:5555 (gleicher Mechanismus wie Overdrive). Beim ersten Start erscheint ein Popup «USB-Debugging erlauben?» — ERLAUBEN drücken. Danach werden alle verweigerten BYDAUTO_*_GET-Berechtigungen via pm grant entsperrt.</string>
-    <string name="btn_adb_local_label">Lokale ADB-Verbindung + Berechtigungen erteilen</string>
     <string name="diag_press_hint">Schaltfläche drücken, um zu starten.</string>
     <string name="diag_share_result1_btn">TEST 1-Ergebnis teilen</string>
     <string name="diag_test2_title">TEST 2 — Cluster-Wiederherstellung</string>

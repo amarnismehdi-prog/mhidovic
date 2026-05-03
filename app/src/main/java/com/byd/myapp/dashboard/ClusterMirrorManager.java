@@ -3,7 +3,6 @@ package com.byd.myapp.dashboard;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.IBinder;
 import android.os.Parcel;

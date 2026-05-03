@@ -106,7 +106,6 @@
     <string name="diag_subtitle">Dashboard ekranına (instrument cluster) uygulama göndermek için hangi mekanizmanın mevcut olduğunu kontrol eder.</string>
     <string name="diag_test1_title">TEST 1 — Yerel ADB bağlantısı (dadb)</string>
     <string name="diag_test1_desc">Tabletin ADB daemon\'ına localhost:5555 üzerinden bağlanır (Overdrive ile aynı mekanizma). İlk başlatmada «USB hata ayıklamaya izin ver?» açılır penceresi görünür — İZİN VER\'e basın. Yetkilendirildikten sonra pm grant ile reddedilen tüm BYDAUTO_*_GET izinlerini açmayı dener.</string>
-    <string name="btn_adb_local_label">Yerel ADB bağlantısı + İzin ver</string>
     <string name="diag_press_hint">Başlatmak için düğmeye basın.</string>
     <string name="diag_share_result1_btn">TEST 1 sonucunu paylaş</string>
     <string name="diag_test2_title">TEST 2 — Küme geri yükleme</string>
