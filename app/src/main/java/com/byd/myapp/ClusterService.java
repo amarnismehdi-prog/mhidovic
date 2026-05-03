@@ -150,7 +150,9 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
                     (android.hardware.display.DisplayManager)
                     getSystemService(DISPLAY_SERVICE);
                 if (dm != null) d = dm.getDisplay(knownId);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                AppLogger.w(TAG, "getDisplay(" + knownId + ") failed: " + e.getMessage());
+            }
             mListener.onClusterDisplayConnected(d, knownId);
         }
     }

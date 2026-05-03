@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * SysInfoActivity — generates a complete diagnostic report of the BYD system.
@@ -74,7 +75,7 @@ public class SysInfoActivity extends AppCompatActivity {
         btnShare.setEnabled(false);
 
         btnGenerate.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { new GenerateTask().execute(); }
+            @Override public void onClick(View v) { startGenerate(); }
         });
 
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -93,22 +94,50 @@ public class SysInfoActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // Report generation (AsyncTask — network in doInBackground)
+    // Report generation (ExecutorService — network off main thread)
     // =========================================================================
 
-    @android.annotation.SuppressLint("StaticFieldLeak")
-    private class GenerateTask extends AsyncTask<Void, String, String> {
+    /** Publishes an incremental update to the TextView from a worker thread. */
+    private void publishUpdate(final String text) {
+        runOnUiThread(new Runnable() {
+            @Override public void run() {
+                tvReport.setText(text);
+                scrollView.post(new Runnable() {
+                    @Override public void run() { scrollView.fullScroll(ScrollView.FOCUS_DOWN); }
+                });
+            }
+        });
+    }
 
-        @Override
-        protected void onPreExecute() {
-            btnGenerate.setEnabled(false);
-            btnSave.setEnabled(false);
-            tvReport.setText(getString(R.string.sysinfo_generating));
-            mReport = new StringBuilder();
-        }
+    private void startGenerate() {
+        btnGenerate.setEnabled(false);
+        btnSave.setEnabled(false);
+        tvReport.setText(getString(R.string.sysinfo_generating));
+        mReport = new StringBuilder();
 
-        @Override
-        protected String doInBackground(Void... voids) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(new Runnable() {
+            @Override public void run() {
+                final String result = generateReport();
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        AppLogger.log("SysInfo", "Report generated");
+                        mReport = new StringBuilder(result);
+                        tvReport.setText(result);
+                        btnGenerate.setEnabled(true);
+                        btnSave.setEnabled(true);
+                        btnShare.setEnabled(true);
+                        scrollView.post(new Runnable() {
+                            @Override public void run() { scrollView.fullScroll(ScrollView.FOCUS_DOWN); }
+                        });
+                    }
+                });
+            }
+        });
+        executor.shutdown();
+    }
+
+    private String generateReport() {
             StringBuilder sb = new StringBuilder();
 
             section(sb, "BYD SEAL DIAGNOSTIC REPORT");
@@ -116,7 +145,7 @@ public class SysInfoActivity extends AppCompatActivity {
                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                             .format(new Date())).append("\n");
             sb.append("App  : ").append(getPackageName()).append("\n");
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 1. System info
             section(sb, "1. ANDROID SYSTEM");
@@ -130,7 +159,7 @@ public class SysInfoActivity extends AppCompatActivity {
             sb.append("Build ID      : ").append(Build.ID).append("\n");
             sb.append("Fingerprint   : ").append(Build.FINGERPRINT).append("\n");
             sb.append("Hardware      : ").append(Build.HARDWARE).append("\n");
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 2. System properties
             section(sb, "2. SYSTEM PROPERTIES (SystemProperties)");
@@ -152,7 +181,7 @@ public class SysInfoActivity extends AppCompatActivity {
                 String val = getSystemProp(prop);
                 sb.append(String.format("%-40s = %s\n", prop, val));
             }
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 3. Detected displays
             section(sb, "3. DETECTED DISPLAYS");
@@ -179,7 +208,7 @@ public class SysInfoActivity extends AppCompatActivity {
                   .append(" ").append(d.getName())
                   .append(" ").append(getDisplaySize(d)).append("\n");
             }
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 4. ActivityOptions reflection
             section(sb, "4. ACTIVITYOPTIONS — AVAILABLE METHODS");
@@ -206,7 +235,7 @@ public class SysInfoActivity extends AppCompatActivity {
             } catch (NoSuchMethodException e) {
                 sb.append("NO\n");
             }
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 5. BYD packages installed
             section(sb, "5. BYD SYSTEM PACKAGES");
@@ -224,7 +253,7 @@ public class SysInfoActivity extends AppCompatActivity {
                 }
             }
             if (bydCount == 0) sb.append("  No BYD package found\n");
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 6. Permissions BYDAUTO
             section(sb, "6. PERMISSIONS BYDAUTO");
@@ -260,7 +289,7 @@ public class SysInfoActivity extends AppCompatActivity {
                         perm.replace("android.permission.", ""),
                         result == PackageManager.PERMISSION_GRANTED ? "✓ GRANTED" : "✗ DENIED"));
             }
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 7. ADB connectivity
             section(sb, "7. ADB TCP CONNECTIVITY");
@@ -270,12 +299,12 @@ public class SysInfoActivity extends AppCompatActivity {
                 sb.append(String.format("  127.0.0.1:%-5d %s\n",
                         port, open ? "OPEN    ✓" : "closed"));
             }
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             // 8. BYD API test (speed)
             section(sb, "8. BYD API — TEST INSTANTIATION");
             sb.append(tryInstantiateBydApi());
-            publishProgress(sb.toString());
+            publishUpdate(sb.toString());
 
             sb.append("\n=== END OF REPORT ===\n");
 
@@ -285,33 +314,6 @@ public class SysInfoActivity extends AppCompatActivity {
             sb.append(log.isEmpty() ? "  (empty log)\n" : log);
 
             return sb.toString();
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-            // Progressive update of the TextView
-            tvReport.setText(values[values.length - 1]);
-            scrollView.post(new Runnable() {
-                @Override public void run() {
-                    scrollView.fullScroll(ScrollView.FOCUS_DOWN);
-                }
-            });
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            AppLogger.log("SysInfo", "Report generated");
-            mReport = new StringBuilder(result);
-            tvReport.setText(result);
-            btnGenerate.setEnabled(true);
-            btnSave.setEnabled(true);
-            btnShare.setEnabled(true);
-            scrollView.post(new Runnable() {
-                @Override public void run() {
-                    scrollView.fullScroll(ScrollView.FOCUS_DOWN);
-                }
-            });
-        }
     }
 
     // =========================================================================

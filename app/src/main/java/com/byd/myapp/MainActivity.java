@@ -1298,9 +1298,7 @@ public class MainActivity extends AppCompatActivity
                 });
 
                 final List<AppInfo> result = apps;
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override public void run() { mAdapter.setApps(result); }
-                });
+                runOnUiThread(() -> mAdapter.setApps(result));
             }
         });
         loader.shutdown(); // thread ends as soon as the above task finishes

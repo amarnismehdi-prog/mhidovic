@@ -284,7 +284,9 @@ public class ClusterMirrorManager {
             daemonBinder.transact(com.byd.myapp.daemon.MirrorDaemon.TRANSACT_MIRROR_STOP,
                     data, null, android.os.IBinder.FLAG_ONEWAY);
             data.recycle();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            AppLogger.w(TAG, "stopMirrorViaDaemon transact failed: " + e.getMessage());
+        }
         mMirrorActive  = false;
         mMirrorSurface = null;
         AppLogger.i(TAG, "stopMirrorViaDaemon sent");
@@ -300,7 +302,9 @@ public class ClusterMirrorManager {
                         IBinder.class);
                 destroyDisplay.setAccessible(true);
                 destroyDisplay.invoke(null, mMirrorDisplayToken);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                AppLogger.w(TAG, "destroyDisplay via reflection failed: " + e.getMessage());
+            }
             mMirrorDisplayToken = null;
             mMirrorSurface = null;
         }
