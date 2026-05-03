@@ -70,9 +70,6 @@ public class MainActivity extends AppCompatActivity
     /** sendInfo code for cluster screen size: 29=8.8", 30=12.3" (default Seal EU), 31=10.25" */
     private static final String PREF_CLUSTER_TYPE  = "cluster_screen_size_cmd";
     private static final int    CLUSTER_TYPE_DEFAULT = 30;
-    // App waiting to be sent during cluster auto-activation
-    private String mPendingLaunchPackage = null;
-
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
@@ -419,31 +416,6 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
 
-                // Launch the pending app (tapped during cluster activation)
-                if (mPendingLaunchPackage != null) {
-                    final String pkg = mPendingLaunchPackage;
-                    mPendingLaunchPackage = null;
-                    String resolvedName;
-                    try {
-                        resolvedName = getPackageManager()
-                                .getApplicationLabel(
-                                    getPackageManager().getApplicationInfo(pkg, 0)).toString();
-                    } catch (Exception ignored) {
-                        resolvedName = pkg;
-                    }
-                    final String appDisplayName = resolvedName;
-                    mClusterService.launchOnDashboard(pkg, new ClusterService.LaunchCallback() {
-                        @Override public void onResult(boolean launched) {
-                            if (launched) {
-                                mCurrentDashboardApp = appDisplayName;
-                                mCurrentDashboardPkg = pkg;
-                                mAdapter.setCurrentPackage(pkg);
-                                updateDashboardStatus(appDisplayName);
-                                updateControlLabel();
-                            }
-                        }
-                    });
-                }
             }
         });
     }

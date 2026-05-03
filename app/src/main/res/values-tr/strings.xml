@@ -33,7 +33,6 @@
     <!-- MainActivity — status texts -->
     <string name="status_starting_cluster">Küme başlatılıyor…</string>
     <string name="status_activating_cluster">Küme etkinleştiriliyor…</string>
-    <string name="status_cluster_activated">Küme etkinleştirildi ✓</string>
     <string name="status_restoring_cluster">Küme geri yükleniyor…</string>
     <string name="status_restoring_origin">Orijinal küme geri yükleniyor…</string>
     <string name="status_dashboard_byd">Gösterge paneli: BYD ekranı</string>
@@ -41,10 +40,6 @@
     <string name="status_vd_detected">Küme VirtualDisplay algılandı ✓ — etkinleştirmeye hazır</string>
     <string name="status_vd_not_found">⚠ VirtualDisplay bulunamadı — tam dizi gerekli (30→16→35)</string>
     <string name="status_activation_timeout">⚠ Zaman aşımı: VirtualDisplay oluşturulamadı. Tekrar deneyin.</string>
-    <string name="status_freedom_active">Freedom aktif ✓ — küme hazır</string>
-    <string name="status_freedom_starting">Freedom başlatılıyor…</string>
-    <string name="status_freedom_not_installed">⚠ Freedom yüklü değil — yayın yapılamıyor</string>
-    <string name="status_freedom_unknown">Freedom: bilinmeyen durum</string>
 
     <!-- MainActivity — Toasts -->
     <string name="toast_app_incompatible">%1$s: yüklü değil veya çoklu ekranla uyumsuz</string>

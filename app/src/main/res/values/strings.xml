@@ -32,7 +32,6 @@
     <!-- MainActivity — status texts -->
     <string name="status_starting_cluster">Démarrage cluster…</string>
     <string name="status_activating_cluster">Activation cluster…</string>
-    <string name="status_cluster_activated">Cluster activé ✓</string>
     <string name="status_restoring_cluster">Restauration cluster…</string>
     <string name="status_restoring_origin">Restauration cluster d\'origine…</string>
     <string name="status_dashboard_byd">Dashboard : affichage BYD</string>
@@ -40,10 +39,6 @@
     <string name="status_vd_detected">VirtualDisplay cluster détecté ✓ — prêt à activer</string>
     <string name="status_vd_not_found">⚠ VirtualDisplay non détecté — séquence complète requise (30→16→35)</string>
     <string name="status_activation_timeout">⚠ Timeout : VirtualDisplay non créé. Réessayez.</string>
-    <string name="status_freedom_active">Freedom actif ✓ — cluster prêt</string>
-    <string name="status_freedom_starting">Freedom en cours de démarrage…</string>
-    <string name="status_freedom_not_installed">⚠ Freedom non installé — streaming impossible</string>
-    <string name="status_freedom_unknown">Freedom : état inconnu</string>
 
     <!-- MainActivity — Toasts -->
     <string name="toast_app_incompatible">%1$s : échec lancement (voir LOG)</string>
