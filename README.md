@@ -86,7 +86,6 @@ app/src/main/java/com/byd/myapp/
 
 ### VirtualDisplay cluster creation — CONFIRMED (03/05/2026)
 
-> Full details: [`doc_api/VIRTUALDISPLAY_CREATION_MECHANISM.md`](../doc_api/VIRTUALDISPLAY_CREATION_MECHANISM.md)
 > Source: live logcat captured on BYD Seal EU (DiLink 3.0, API 29)
 
 **The cluster VirtualDisplay does NOT exist at boot.** It is created on demand by the
