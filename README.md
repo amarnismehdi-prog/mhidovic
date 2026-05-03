@@ -331,12 +331,14 @@ adb pull /sdcard/Android/data/com.byd.myapp/files/  # package ID unchanged
 
 | Version | Summary |
 |---------|---------|
-| **0.1.0-alpha** | First public release — cluster mirror working (image + touch) |
-| **0.1.1-alpha** | Bug fixes, code sanity, README improvements |
-| **0.1.2-alpha** | EN translation, DashCast rename, new icon — device-validated |
-| **0.1.3-alpha** | Full i18n (FR/EN/DE/IT/TR), string externalization |
+| **0.1.7-alpha** | **Freedom-free** — VirtualDisplay creation confirmed (sendInfo 30→16→35 sequence), app fully autonomous. Sanity fixes. — **current public release** |
+| **0.1.6-alpha** | DiLink 5 RE sniffer, deep dumpsys, broadcast tracking |
+| **0.1.5-alpha** | Stability improvements (last release with Freedom dependency) |
 | **0.1.4-alpha** | Fix touch offset bug in cluster mirror input forwarding |
-| **0.1.5-alpha** | Stability improvements — **current public release** |
+| **0.1.3-alpha** | Full i18n (FR/EN/DE/IT/TR), string externalization |
+| **0.1.2-alpha** | EN translation, DashCast rename, new icon — device-validated |
+| **0.1.1-alpha** | Bug fixes, code sanity, README improvements |
+| **0.1.0-alpha** | First public release — cluster mirror working (image + touch) |
 
 Full internal development history: [CHANGELOG.md](CHANGELOG.md)
 
