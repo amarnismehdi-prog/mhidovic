@@ -40,6 +40,12 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     private static final int NOTIF_ID = 1;
     public static boolean sIsRunning = false;
 
+    // Inset applied to FREEFORM launch bounds on the cluster to avoid content clipping at
+    // the physical screen edges (curved glass, bezel) of the BYD Seal EU 12.3" cluster.
+    // Tune these values if content is still clipped or too inset.
+    private static final int CLUSTER_INSET_H = 80;  // pixels removed on each horizontal side
+    private static final int CLUSTER_INSET_V = 50;  // pixels removed on each vertical side
+
     // ── Listener for MainActivity ───────────────────────────────────────────
     public interface Listener {
         void onClusterDisplayConnected(Display display, int displayId);
@@ -200,6 +206,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
                     launchIntent.addFlags(0x10008000); // NEW_TASK | CLEAR_TASK
                     android.app.ActivityOptions opts = android.app.ActivityOptions.makeBasic();
                     opts.setLaunchDisplayId(displayId);
+                    if (displayId > 0) applyClusterFreeformBounds(opts, displayId);
 
                     startActivityViaIAM(launchIntent, opts);
 
@@ -290,6 +297,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
                     launchIntent.addFlags(0x10000000 | 0x08000000); // NEW_TASK | MULTIPLE_TASK
                     android.app.ActivityOptions opts = android.app.ActivityOptions.makeBasic();
                     opts.setLaunchDisplayId(displayId);
+                    if (displayId > 0) applyClusterFreeformBounds(opts, displayId);
 
                     startActivityViaIAM(launchIntent, opts);
 
@@ -310,6 +318,45 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
                 }
             }
         }, 500);
+    }
+
+    /**
+     * Applies WINDOWING_MODE_FREEFORM + inset bounds to ActivityOptions for cluster launches.
+     * Both @hide APIs are accessed via reflection.
+     * Inset ({@link #CLUSTER_INSET_H}/{@link #CLUSTER_INSET_V}) avoids content clipping at the
+     * physical curved edges of the BYD Seal EU cluster screen.
+     */
+    private void applyClusterFreeformBounds(android.app.ActivityOptions opts, int displayId) {
+        try {
+            java.lang.reflect.Method setWM = android.app.ActivityOptions.class
+                    .getDeclaredMethod("setLaunchWindowingMode", int.class);
+            setWM.setAccessible(true);
+            setWM.invoke(opts, 5); // WINDOWING_MODE_FREEFORM = 5
+        } catch (Exception e) {
+            AppLogger.w(TAG, "setLaunchWindowingMode unavailable: " + e.getMessage());
+        }
+        android.graphics.Point sz = new android.graphics.Point(1920, 1080);
+        try {
+            android.hardware.display.DisplayManager dm =
+                    (android.hardware.display.DisplayManager) getSystemService(DISPLAY_SERVICE);
+            android.view.Display d = (dm != null) ? dm.getDisplay(displayId) : null;
+            if (d != null) d.getRealSize(sz);
+        } catch (Exception e) {
+            AppLogger.w(TAG, "getRealSize failed: " + e.getMessage());
+        }
+        android.graphics.Rect bounds = new android.graphics.Rect(
+                CLUSTER_INSET_H, CLUSTER_INSET_V,
+                sz.x - CLUSTER_INSET_H, sz.y - CLUSTER_INSET_V);
+        try {
+            java.lang.reflect.Method setLB = android.app.ActivityOptions.class
+                    .getDeclaredMethod("setLaunchBounds", android.graphics.Rect.class);
+            setLB.setAccessible(true);
+            setLB.invoke(opts, bounds);
+            AppLogger.i(TAG, "cluster FREEFORM bounds=" + bounds
+                    + " display=" + displayId + " " + sz.x + "\u00d7" + sz.y);
+        } catch (Exception e) {
+            AppLogger.w(TAG, "setLaunchBounds unavailable: " + e.getMessage());
+        }
     }
 
     /**
