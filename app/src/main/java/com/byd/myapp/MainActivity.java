@@ -491,8 +491,6 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    
-
     // ---- AppListAdapter.OnSendToDashboardListener ----
 
     @Override

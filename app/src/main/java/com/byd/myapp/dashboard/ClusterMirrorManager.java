@@ -3,7 +3,6 @@ package com.byd.myapp.dashboard;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.hardware.display.VirtualDisplay;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.view.Display;
@@ -29,15 +28,9 @@ public class ClusterMirrorManager {
 
     private static final String TAG = "ClusterMirrorManager";
 
-    private static final int VDISPLAY_FLAGS = 320;
-
-    // ── SurfaceControl mirror token ──────────────────────────────────────────
+    // ── SurfaceControl mirror token ───────────────────────────────────────────────
     private IBinder mMirrorDisplayToken = null;
     private Surface mMirrorSurface      = null;
-
-    // ── Local preview ────────────────────────────────────────────────────────
-    private VirtualDisplay mPreviewVD    = null;
-    private int            mPreviewDisplayId = -1;
 
     private boolean mMirrorActive = false;
     private int     mClusterW = 1920;
@@ -54,7 +47,6 @@ public class ClusterMirrorManager {
     public int     getClusterWidth()           { return mClusterW; }
     public int     getClusterHeight()          { return mClusterH; }
     public boolean isMirrorActive()            { return mMirrorActive; }
-    public int     getPreviewDisplayId()       { return mPreviewDisplayId; }
 
     /** Returns the horizontal letterbox offset (pixels) used in the last setDisplayProjection call. */
     public int   getProjOffsetX() { return mProjOffsetX; }
@@ -183,7 +175,6 @@ public class ClusterMirrorManager {
 
             mMirrorSurface = targetSurface;
             mMirrorActive  = true;
-            // mPreviewDisplayId reste -1 (pas de VirtualDisplay — le contenu vient du cluster)
             AppLogger.i(TAG, "SurfaceControl mirror ✓ layerStack=" + layerStack
                     + " src=" + mClusterW + "×" + mClusterH
                     + " dest=" + drawW + "×" + drawH + " offset=(" + offsetX + "," + offsetY + ")");
@@ -311,12 +302,7 @@ public class ClusterMirrorManager {
 
     private void stopPreview() {
         mMirrorActive = false;
-        mPreviewDisplayId = -1;
         mProjScale = 0f;  // Reset: signals "not yet set" to touch mapping
-        if (mPreviewVD != null) {
-            try { mPreviewVD.release(); } catch (Exception e) { AppLogger.d(TAG, "mPreviewVD.release() failed (already released?): " + e.getMessage()); }
-            mPreviewVD = null;
-        }
         destroyMirrorToken();
     }
 
