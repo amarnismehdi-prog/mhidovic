@@ -1,7 +1,6 @@
 package com.byd.myapp.dashboard;
 
 import android.content.Context;
-import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -192,15 +191,9 @@ public class ClusterManager {
         // Timeout: sequence 30→6s→16→6s→35 + ~280ms creation = ~14.3s → 18s with margin.
         final long timeoutMs = CLUSTER_DISPLAY_TIMEOUT_MS;
 
-        AppLogger.i(TAG, "Invoking native BYD cluster spawn (com.byd.appstartmanagement)");
-        Intent bypassIntent = new Intent();
-        bypassIntent.setClassName("com.byd.appstartmanagement", "com.byd.appstartmanagement.frame.AppStartManagement");
-        bypassIntent.addFlags(268468224);
-        try {
-            mContext.startActivity(bypassIntent);
-        } catch (Exception e) {
-            AppLogger.e(TAG, "Bypass failed", e);
-        }
+        // Do not start AppStartManagement in foreground: it briefly opens a visible BYD app.
+        // The cluster VirtualDisplay is created by the ADB sendInfo sequence itself (30→16→35).
+        AppLogger.i(TAG, "Starting activation sequence without foreground AppStartManagement launch");
         mHandler.postDelayed(new Runnable() { @Override public void run() { sendActivationSequence(); } }, 2000);
 
         // Listen for display additions + timeout
