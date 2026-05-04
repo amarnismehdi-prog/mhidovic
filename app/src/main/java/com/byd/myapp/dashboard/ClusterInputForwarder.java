@@ -34,7 +34,7 @@ public class ClusterInputForwarder {
     private static final int INJECT_INPUT_EVENT_MODE_ASYNC = 0;
 
     private int mClusterWidth      = 1920;
-    private int mClusterHeight     = 1080;
+    private int mClusterHeight     = 720;  // Confirmed: cluster VirtualDisplay is 1920×720 (dumpsys window 03/05/2026)
     private int mClusterDisplayId  = 1;   // Cluster display ID (routing for API 29)
 
     /** MirrorDaemon Binder — if non-null, events are routed through uid=2000. */

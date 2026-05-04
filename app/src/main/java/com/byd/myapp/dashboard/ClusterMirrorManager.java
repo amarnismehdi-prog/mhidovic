@@ -41,7 +41,7 @@ public class ClusterMirrorManager {
 
     private boolean mMirrorActive = false;
     private int     mClusterW = 1920;
-    private int     mClusterH = 1080;  // Match physical cluster resolution (Seal EU)
+    private int     mClusterH = 720;   // Confirmed: fission_bg_xdjaVirtualSurface 1920×720 (dumpsys window 03/05/2026)
 
     // ── Projection parameters (set when setDisplayProjection is called) ───────
     // Stored with integer arithmetic to match the daemon's computation exactly.
@@ -209,7 +209,7 @@ public class ClusterMirrorManager {
 
         // Cluster dimensions
         if (clusterDisplay != null) {
-            Point sz = new Point(1920, 1080);
+            Point sz = new Point(1920, 720);
             clusterDisplay.getRealSize(sz);
             mClusterW = sz.x;
             mClusterH = sz.y;

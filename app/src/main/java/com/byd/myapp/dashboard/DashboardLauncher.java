@@ -100,7 +100,7 @@ public class DashboardLauncher {
                 Method setLB = ActivityOptions.class
                         .getDeclaredMethod("setLaunchBounds", Rect.class);
                 setLB.setAccessible(true);
-                Point size = new Point(1920, 1080); // fallback: VirtualDisplay AutoDisplayService default size
+                Point size = new Point(1920, 720); // fallback: fission_bg_xdjaVirtualSurface confirmed 1920×720 (dumpsys window, 03/05/2026)
                 DisplayManager dm = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
                 Display targetDisplay = (dm != null) ? dm.getDisplay(displayId) : null;
                 if (targetDisplay != null) {

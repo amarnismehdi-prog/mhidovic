@@ -226,7 +226,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
                                     ClusterService.this, pkg,
                                     CLUSTER_INSET_H + "," + CLUSTER_INSET_V
                                     + "," + (1920 - CLUSTER_INSET_H)
-                                    + "," + (1080 - CLUSTER_INSET_V),
+                                    + "," + (720 - CLUSTER_INSET_V), // cluster is 1920×720
                                     new AdbLocalClient.Callback() {
                                         @Override public void onSuccess(String msg) {
                                             AppLogger.i(TAG, "bounds check: " + msg);
@@ -356,7 +356,7 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
         } catch (Exception e) {
             AppLogger.w(TAG, "setLaunchWindowingMode unavailable: " + e.getMessage());
         }
-        android.graphics.Point sz = new android.graphics.Point(1920, 1080);
+        android.graphics.Point sz = new android.graphics.Point(1920, 720); // confirmed: fission_bg_xdjaVirtualSurface is 1920×720 (not 1080)
         try {
             android.hardware.display.DisplayManager dm =
                     (android.hardware.display.DisplayManager) getSystemService(DISPLAY_SERVICE);
