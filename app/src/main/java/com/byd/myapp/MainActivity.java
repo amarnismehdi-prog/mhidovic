@@ -1075,6 +1075,7 @@ public class MainActivity extends AppCompatActivity
         popup.getMenu().add(0, 1, 0, getString(R.string.menu_settings));
         popup.getMenu().add(0, 2, 0, getString(R.string.menu_diagnostic));
         popup.getMenu().add(0, 3, 0, getString(R.string.menu_system_report));
+        popup.getMenu().add(0, 4, 0, getString(R.string.menu_log));
         popup.getMenu().add(0, 5, 0, getString(R.string.menu_language));
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
@@ -1083,6 +1084,7 @@ public class MainActivity extends AppCompatActivity
                     case 1: showClusterTypeSettings(); return true;
                     case 2: startActivity(new Intent(MainActivity.this, DiagActivity.class)); return true;
                     case 3: startActivity(new Intent(MainActivity.this, SysInfoActivity.class)); return true;
+                    case 4: startActivity(new Intent(MainActivity.this, LogActivity.class)); return true;
                     case 5:
                         SharedPreferences p = getSharedPreferences(
                                 LocaleHelper.PREF_FILE, MODE_PRIVATE);

@@ -57,6 +57,7 @@
     <string name="menu_settings">⚙️ Paramètres</string>
     <string name="menu_diagnostic">🔧 Diagnostic</string>
     <string name="menu_system_report">📋 Rapport système</string>
+    <string name="menu_log">📜 Logs</string>
     <string name="menu_language">🌐 Langue</string>
 
     <!-- MainActivity — cluster type dialog -->
