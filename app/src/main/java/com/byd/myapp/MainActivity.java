@@ -137,6 +137,17 @@ public class MainActivity extends AppCompatActivity
     // Screenshot mirror loop (fallback when SurfaceControl.createDisplay() fails)
     private final Handler  mScreenshotHandler  = new Handler(Looper.getMainLooper());
 
+    // Receiver for FloatingRemoteButton tap → open mirror panel from overlay
+    private final BroadcastReceiver mShowMirrorReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mCurrentDashboardApp == null) return; // no app on cluster
+            showMirrorView();
+            attemptStartMirrorWithCurrentHolder();
+            AppLogger.d(TAG, "mShowMirrorReceiver → showMirrorView");
+        }
+    };
+
     // MirrorDaemon — Binder received via broadcast ACTION_DAEMON_READY
     private IBinder mDaemonBinder = null;
     private final BroadcastReceiver mDaemonReadyReceiver = new BroadcastReceiver() {
@@ -185,9 +196,13 @@ public class MainActivity extends AppCompatActivity
         // Receiver to retrieve the MirrorDaemon Binder (uid=2000)
         registerReceiver(mDaemonReadyReceiver,
                 new IntentFilter(com.byd.myapp.daemon.MirrorDaemon.ACTION_DAEMON_READY));
-        
-        // Floating "GPS" button to quickly reopen Waze streaming
+
+        // Floating 📺 mirror button — started once, visibility controlled by show()/hide()
         startService(new Intent(this, FloatingRemoteButton.class));
+
+        // Handle a tap on the floating button when the Activity is already alive
+        // (Activity exists in back stack → onNewIntent fires instead of onCreate)
+        handleShowMirrorIntent(getIntent());
 
         tvDashboardStatus   = (TextView) findViewById(R.id.tv_dashboard_status);
         btnActivateCluster  = (Button)   findViewById(R.id.btn_activate_cluster);
@@ -338,9 +353,28 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleShowMirrorIntent(intent);
+    }
+
+    private void handleShowMirrorIntent(Intent intent) {
+        if (intent != null
+                && FloatingRemoteButton.ACTION_SHOW_MIRROR.equals(intent.getAction())
+                && mCurrentDashboardApp != null) {
+            showMirrorView();
+            attemptStartMirrorWithCurrentHolder();
+            AppLogger.d(TAG, "handleShowMirrorIntent → showMirrorView for " + mCurrentDashboardApp);
+        }
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         AppLogger.lifecycle(getClass().getSimpleName(), "onStart");
+        registerReceiver(mShowMirrorReceiver,
+                new IntentFilter(FloatingRemoteButton.ACTION_SHOW_MIRROR));
         // Retrieve the daemon Binder from ServiceManager if not yet available.
         // ACTION_REQUEST_BINDER no longer works: the daemon no longer has a registerReceiver
         // (forbidden since systemMain() — AMS rejects IApplicationThread).
@@ -376,6 +410,7 @@ public class MainActivity extends AppCompatActivity
     protected void onStop() {
         super.onStop();
         AppLogger.lifecycle(getClass().getSimpleName(), "onStop");
+        try { unregisterReceiver(mShowMirrorReceiver); } catch (IllegalArgumentException ignored) {}
         // Remove the listener but keep the service active: projection continues.
         // Stop the mirror: the HandlerThread must not capture frames in the background.
         // The mirror restarts automatically via the savedItem mechanism in
@@ -391,6 +426,7 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
         AppLogger.lifecycle(getClass().getSimpleName(), "onDestroy");
         unregisterReceiver(mDaemonReadyReceiver);
+        try { unregisterReceiver(mShowMirrorReceiver); } catch (IllegalArgumentException ignored) {}
         if (mServiceBound) {
             unbindService(mServiceConn);
             mServiceBound  = false;
@@ -1160,13 +1196,15 @@ public class MainActivity extends AppCompatActivity
         tvDashboardStatus.setTextColor(Color.WHITE);
         if (appName == null) {
             tvDashboardStatus.setText(getString(R.string.status_dashboard_byd));
-            // No app on cluster — hide the mirror shortcut
+            // No app on cluster — hide the mirror shortcut and the floating button
             btnShowMirror.setVisibility(View.GONE);
+            FloatingRemoteButton.hide();
             stopTrackingApp(); // cancel any pending process-death watch
         } else {
             tvDashboardStatus.setText(getString(R.string.status_dashboard_app, appName));
-            // App active on cluster — show the mirror shortcut in the status bar
+            // App active on cluster — show the mirror shortcut and the floating button
             btnShowMirror.setVisibility(View.VISIBLE);
+            FloatingRemoteButton.show();
         }
         btnRestoreCluster.setEnabled(true);
     }

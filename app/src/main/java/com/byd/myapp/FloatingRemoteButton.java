@@ -16,17 +16,14 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 /**
- * FloatingRemoteButton — persistent overlay button (visible over all screens).
+ * FloatingRemoteButton — persistent overlay button visible over all screens.
  *
- * Displays a small draggable "GPS" badge in the corner of the screen.
- * • A tap brings MainActivity back to the foreground.
- * • Long press closes this overlay service.
+ * Displays a draggable 📺 badge. Only visible when an app is active on the cluster.
+ * • Tap  → broadcasts ACTION_SHOW_MIRROR so MainActivity opens the mirror panel.
+ * • Long press → closes this overlay service.
  *
- * Started as a foreground Service from MainActivity.onCreate() and stays
- * active as long as the app is alive.
- *
- * Uses TYPE_APPLICATION_OVERLAY (2038) — SYSTEM_ALERT_WINDOW is declared
- * in the manifest AND the APK is signed with platform.keystore (= granted).
+ * Visibility is controlled externally via the static show() / hide() helpers
+ * called by MainActivity whenever mCurrentDashboardApp changes.
  */
 public class FloatingRemoteButton extends Service {
 
@@ -34,10 +31,43 @@ public class FloatingRemoteButton extends Service {
     private static final String CHANNEL = "floating_remote_btn";
     private static final int    NOTIF_ID = 9989;
 
+    /** Broadcast action sent to MainActivity to open the mirror panel. */
+    public static final String ACTION_SHOW_MIRROR =
+            "com.byd.myapp.action.SHOW_MIRROR";
+
+    // ── Static helpers so MainActivity can show/hide without a Service reference ──
+    private static FloatingRemoteButton sInstance;
+
+    public static void show() {
+        FloatingRemoteButton inst = sInstance;
+        if (inst != null && inst.mFloatView != null) {
+            android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+            h.post(new Runnable() {
+                @Override public void run() {
+                    FloatingRemoteButton i = sInstance;
+                    if (i != null && i.mFloatView != null) {
+                        i.mFloatView.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+        }
+    }
+
+    public static void hide() {
+        android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        h.post(new Runnable() {
+            @Override public void run() {
+                FloatingRemoteButton i = sInstance;
+                if (i != null && i.mFloatView != null) {
+                    i.mFloatView.setVisibility(View.GONE);
+                }
+            }
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     private WindowManager mWindowManager;
     private View          mFloatView;
-    // Guard against infinite loop: if canDrawOverlays() stays false after ADB grant
-    // (e.g. AppOp not effective immediately), only retry once.
     private boolean       mGrantAttempted = false;
 
     @Override
@@ -45,8 +75,8 @@ public class FloatingRemoteButton extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mFloatView != null) return START_STICKY; // already created
-
+        sInstance = this;
+        if (mFloatView != null) return START_STICKY;
         startForegroundCompat();
         createOverlay();
         AppLogger.d(TAG, "FloatingRemoteButton started");
@@ -56,6 +86,7 @@ public class FloatingRemoteButton extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        sInstance = null;
         if (mFloatView != null) {
             try { mWindowManager.removeView(mFloatView); } catch (Exception ignored) {}
             mFloatView = null;
@@ -65,13 +96,8 @@ public class FloatingRemoteButton extends Service {
     // ── Overlay ───────────────────────────────────────────────────────────────
 
     private void createOverlay() {
-        // Guard: SYSTEM_ALERT_WINDOW (AppOp) must be granted before addView().
-        // On Android 10+, even with platform.keystore, AppOp may not be granted
-        // automatiquement pour une app en /data/app.  On tente un auto-grant via le
-        // shell ADB local (dadb), puis on relance createOverlay() sur le main thread.
         if (!android.provider.Settings.canDrawOverlays(this)) {
             if (mGrantAttempted) {
-                // A previous attempt already failed — do not loop indefinitely.
                 AppLogger.e(TAG, "SYSTEM_ALERT_WINDOW still denied after ADB attempt — badge not shown");
                 return;
             }
@@ -84,30 +110,26 @@ public class FloatingRemoteButton extends Service {
                 public void onSuccess(String report) {
                     AppLogger.i(TAG, "SYSTEM_ALERT_WINDOW granted via ADB ✓");
                     mainHandler.post(new Runnable() {
-                        @Override public void run() {
-                            createOverlay(); // retry — canDrawOverlays() is now true
-                        }
+                        @Override public void run() { createOverlay(); }
                     });
                 }
                 @Override
                 public void onError(String error) {
-                    AppLogger.e(TAG, "Auto-grant SYSTEM_ALERT_WINDOW failed: " + error
-                            + " — badge not shown");
+                    AppLogger.e(TAG, "Auto-grant SYSTEM_ALERT_WINDOW failed: " + error);
                 }
             });
             return;
         }
-        mGrantAttempted = false; // reset for service restarts
+        mGrantAttempted = false;
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        // Badge textuel compact
         final TextView badge = new TextView(this);
-        badge.setText("GPS");
-        badge.setTextColor(Color.WHITE);
-        badge.setTextSize(12f);
-        badge.setBackgroundColor(Color.argb(220, 200, 60, 40)); // rouge semi-transparent
-        badge.setPadding(24, 16, 24, 16);
+        badge.setText("\uD83D\uDCFA"); // 📺
+        badge.setTextSize(22f);
+        badge.setBackgroundColor(Color.argb(220, 0, 105, 92)); // teal #00695C
+        badge.setPadding(20, 12, 20, 12);
         badge.setElevation(8f);
+        badge.setVisibility(View.GONE); // hidden until an app is on the cluster
 
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -149,18 +171,20 @@ public class FloatingRemoteButton extends Service {
                         float movX = Math.abs(e.getRawX() - initTX);
                         float movY = Math.abs(e.getRawY() - initTY);
                         long held = System.currentTimeMillis() - downTime;
-
                         if (movX < 12 && movY < 12) {
                             if (held > 600) {
-                                // Long press → Ferme le bouton
-                                AppLogger.i(TAG, "Fermeture du Remote Button");
+                                // Long press → close overlay
+                                AppLogger.i(TAG, "Long-press → stop FloatingRemoteButton");
                                 stopSelf();
                             } else {
-                                // Tap → ouvrir MainActivity au premier plan
-                                Intent intent = new Intent(FloatingRemoteButton.this, MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                // Tap → bring MainActivity to front + open mirror panel
+                                Intent bringFront = new Intent(
+                                        FloatingRemoteButton.this, MainActivity.class);
+                                bringFront.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                                         | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                                startActivity(intent);
+                                bringFront.setAction(ACTION_SHOW_MIRROR);
+                                startActivity(bringFront);
+                                AppLogger.d(TAG, "Tap → ACTION_SHOW_MIRROR");
                             }
                         }
                         return true;
@@ -173,17 +197,17 @@ public class FloatingRemoteButton extends Service {
         try {
             mWindowManager.addView(mFloatView, params);
         } catch (Exception e) {
-            AppLogger.e(TAG, "addView overlay failed — permission denied?", e);
+            AppLogger.e(TAG, "addView overlay failed", e);
             mFloatView = null;
         }
     }
 
-    // ── Foreground service (obligatoire API 26+) ──────────────────────────────
+    // ── Foreground service ────────────────────────────────────────────────────
 
     private void startForegroundCompat() {
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel(
-                CHANNEL, "Bouton rapide", NotificationManager.IMPORTANCE_MIN));
+                CHANNEL, "Bouton miroir cluster", NotificationManager.IMPORTANCE_MIN));
 
         Intent tapIntent = new Intent(this, MainActivity.class);
         tapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -191,9 +215,9 @@ public class FloatingRemoteButton extends Service {
                 this, 0, tapIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification notif = new Notification.Builder(this, CHANNEL)
-                .setSmallIcon(android.R.drawable.ic_menu_info_details)
+                .setSmallIcon(android.R.drawable.ic_menu_view)
                 .setContentTitle("DashCast")
-                .setContentText("Tap pour revenir sur l'app")
+                .setContentText("📺 Miroir cluster actif")
                 .setContentIntent(pi)
                 .setOngoing(true)
                 .build();
@@ -201,3 +225,4 @@ public class FloatingRemoteButton extends Service {
         startForeground(NOTIF_ID, notif);
     }
 }
+
