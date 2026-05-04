@@ -409,7 +409,7 @@ public class DiagActivity extends AppCompatActivity {
     private static final String AUTO_DISPLAY_SVC = AUTO_DISPLAY_PKG + "/.AutoDisplayService";
 
     private void startAutoDisplayService() {
-        tvAutoDisplayResult.setText("Démarrage via ADB...");
+        tvAutoDisplayResult.setText(getString(R.string.diag_auto_starting));
         tvAutoDisplayResult.setTextColor(0xFFFFAB40);
         btnAutoDisplayStart.setEnabled(false);
 
@@ -446,14 +446,14 @@ public class DiagActivity extends AppCompatActivity {
     }
 
     private void stopAutoDisplayService() {
-        tvAutoDisplayResult.setText("Arrêt via ADB...");
+        tvAutoDisplayResult.setText(getString(R.string.diag_auto_stopping));
         tvAutoDisplayResult.setTextColor(0xFFFFAB40);
         AdbLocalClient.executeShellWithResult(this,
                 "am stopservice " + AUTO_DISPLAY_SVC + " 2>&1",
                 new AdbLocalClient.Callback() {
             @Override public void onSuccess(String report) {
                 runOnUiThread(() -> {
-                    tvAutoDisplayResult.setText("STOP: " + report.trim());
+                    tvAutoDisplayResult.setText(getString(R.string.diag_auto_stopped, report.trim()));
                     tvAutoDisplayResult.setTextColor(0xFFFF5252);
                 });
             }
@@ -500,7 +500,7 @@ public class DiagActivity extends AppCompatActivity {
         AdbLocalClient.sendInfo(this, 1000, 16, "", new AdbLocalClient.Callback() {
             @Override
             public void onSuccess(String ignored) {
-                runOnUiThread(() -> tvTest13Result.setText("Display released. Probing JNI..."));
+                runOnUiThread(() -> tvTest13Result.setText(getString(R.string.diag_jni_display_released)));
                 new Thread(() -> {
                     try {
                         Thread.sleep(1000);
@@ -532,7 +532,7 @@ public class DiagActivity extends AppCompatActivity {
                     } catch (Exception e) {
                         AppLogger.e("DiagJNI", "Exception", e);
                         runOnUiThread(() -> {
-                            tvTest13Result.setText("FATAL: " + e.getMessage());
+                            tvTest13Result.setText(getString(R.string.diag_jni_fatal, e.getMessage()));
                             btnTest13.setEnabled(true);
                         });
                     }
@@ -542,7 +542,7 @@ public class DiagActivity extends AppCompatActivity {
             @Override
             public void onError(String e) {
                 runOnUiThread(() -> {
-                    tvTest13Result.setText("Failed to send 16: " + e);
+                    tvTest13Result.setText(getString(R.string.diag_jni_send16_failed, e));
                     btnTest13.setEnabled(true);
                 });
             }
@@ -565,7 +565,7 @@ public class DiagActivity extends AppCompatActivity {
     }
 
     private void runStartAndProbe() {
-        tvTest13Result.setText("Diagnostic en cours...");
+        tvTest13Result.setText(getString(R.string.diag_running));
         btnJniStartProbe.setEnabled(false);
         btnTest13.setEnabled(false);
 
@@ -638,7 +638,7 @@ public class DiagActivity extends AppCompatActivity {
     // TEST 15 : Dumpsys window displays
     // -------------------------------------------------------------------------
     private void runDumpsysWindows() {
-        tvDumpsysResult.setText("Execution via adb local...");
+        tvDumpsysResult.setText(getString(R.string.diag_dumpsys_running));
         btnDumpsysWindows.setEnabled(false);
         AdbLocalClient.executeShellWithResult(this, "dumpsys window displays", new AdbLocalClient.Callback() {
             @Override
@@ -652,7 +652,7 @@ public class DiagActivity extends AppCompatActivity {
             @Override
             public void onError(final String error) {
                 runOnUiThread(() -> {
-                    tvDumpsysResult.setText("ERREUR:\n" + error);
+                    tvDumpsysResult.setText(getString(R.string.diag_dumpsys_error, error));
                     btnDumpsysWindows.setEnabled(true);
                 });
             }
@@ -662,13 +662,13 @@ public class DiagActivity extends AppCompatActivity {
     private static final long DAEMON_TIMEOUT_MS = 15_000;
 
     private void runDaemonVdTest() {
-        tvDaemonVdResult.setText("Lancement du daemon via adb local...");
+        tvDaemonVdResult.setText(getString(R.string.diag_daemon_launching));
         btnDaemonVdTest.setEnabled(false);
 
         // Timeout de sécurité : réactive le bouton si ADB ne répond pas dans les 15s
         android.os.Handler timeoutHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         Runnable timeoutAction = () -> {
-            tvDaemonVdResult.setText("TIMEOUT : ADB n'a pas répondu dans " + (DAEMON_TIMEOUT_MS / 1000) + "s.");
+            tvDaemonVdResult.setText(getString(R.string.diag_daemon_timeout, (int)(DAEMON_TIMEOUT_MS / 1000)));
             btnDaemonVdTest.setEnabled(true);
         };
         timeoutHandler.postDelayed(timeoutAction, DAEMON_TIMEOUT_MS);
@@ -681,7 +681,7 @@ public class DiagActivity extends AppCompatActivity {
                 public void onSuccess(final String report) {
                     timeoutHandler.removeCallbacks(timeoutAction);
                     runOnUiThread(() -> {
-                        tvDaemonVdResult.setText("DAEMON OUTPUT: " + report);
+                        tvDaemonVdResult.setText(getString(R.string.diag_daemon_output, report));
                         btnDaemonVdTest.setEnabled(true);
                     });
                 }
@@ -689,14 +689,14 @@ public class DiagActivity extends AppCompatActivity {
                 public void onError(final String error) {
                     timeoutHandler.removeCallbacks(timeoutAction);
                     runOnUiThread(() -> {
-                        tvDaemonVdResult.setText("ERREUR: " + error);
+                        tvDaemonVdResult.setText(getString(R.string.diag_daemon_error, error));
                         btnDaemonVdTest.setEnabled(true);
                     });
                 }
             });
         } catch (Exception e) {
             timeoutHandler.removeCallbacks(timeoutAction);
-            tvDaemonVdResult.setText("Erreur APK path: " + e.getMessage());
+            tvDaemonVdResult.setText(getString(R.string.diag_apk_path_error, e.getMessage()));
             btnDaemonVdTest.setEnabled(true);
         }
     }
@@ -715,7 +715,7 @@ public class DiagActivity extends AppCompatActivity {
 
     private void runFissionViaBinder() {
         if (tvFissionResult == null) return;
-        tvFissionResult.setText("sendInfo Java direct...");
+        tvFissionResult.setText(getString(R.string.diag_fission_binder_starting));
         btnFissionViaBinder.setEnabled(false);
         btnFissionLaunch.setEnabled(false);
         mFissionDisplayId = -1;
@@ -851,7 +851,7 @@ public class DiagActivity extends AppCompatActivity {
     // =========================================================================
 
     private void runFissionPipeline() {
-        tvFissionResult.setText("Séquence en cours...");
+        tvFissionResult.setText(getString(R.string.diag_fission_running));
         btnFissionPipeline.setEnabled(false);
         btnFissionLaunch.setEnabled(false);
         mFissionDisplayId = -1;
@@ -943,10 +943,10 @@ public class DiagActivity extends AppCompatActivity {
 
     private void launchOnFissionDisplay() {
         if (mFissionDisplayId == -1) {
-            tvFissionResult.setText("❌ Pas de display fission. Lancer d'abord \"Créer Fission Display\".");
+            tvFissionResult.setText(getString(R.string.diag_fission_no_display));
             return;
         }
-        tvFissionResult.setText("Lancement sur display " + mFissionDisplayId + "...");
+        tvFissionResult.setText(getString(R.string.diag_fission_launching, mFissionDisplayId));
         btnFissionLaunch.setEnabled(false);
 
         new Thread(() -> {
@@ -995,7 +995,7 @@ public class DiagActivity extends AppCompatActivity {
                 String text = tv.getText().toString().trim();
                 if (text.isEmpty() || text.equals("--")) {
                     android.widget.Toast.makeText(this,
-                            "Pas de résultat à partager.",
+                            getString(R.string.toast_no_result_to_share),
                             android.widget.Toast.LENGTH_SHORT).show();
                     return true;
                 }
@@ -1046,7 +1046,7 @@ public class DiagActivity extends AppCompatActivity {
         AppLogger.i("RESniffer", "Starting RE Sniffer → " + p);
 
         runOnUiThread(() -> {
-            tvReSnifferStatus.setText("Initialisation...");
+            tvReSnifferStatus.setText(getString(R.string.diag_sniffer_initializing));
             tvReSnifferStatus.setTextColor(0xFFFFAB40);
         });
 
@@ -1107,16 +1107,16 @@ public class DiagActivity extends AppCompatActivity {
                 AdbLocalClient.executeShell(DiagActivity.this, bgCmd);
 
                 runOnUiThread(() -> {
-                    tvReSnifferStatus.setText("ACTIF → " + mReSnifferFile.getName());
+                    tvReSnifferStatus.setText(getString(R.string.diag_sniffer_active, mReSnifferFile.getName()));
                     tvReSnifferStatus.setTextColor(0xFF69F0AE);
                     android.widget.Toast.makeText(DiagActivity.this,
-                            "Sniffer démarré : " + mReSnifferFile.getName(),
+                            getString(R.string.toast_sniffer_started, mReSnifferFile.getName()),
                             android.widget.Toast.LENGTH_LONG).show();
                 });
             }
             @Override public void onError(String err) {
                 runOnUiThread(() -> {
-                    tvReSnifferStatus.setText("❌ Échec init: " + err);
+                    tvReSnifferStatus.setText(getString(R.string.diag_sniffer_init_failed, err));
                     tvReSnifferStatus.setTextColor(0xFFFF5252);
                 });
             }
@@ -1145,15 +1145,15 @@ public class DiagActivity extends AppCompatActivity {
                     "echo '[RE Sniffer] Stopped.' >> " + mReSnifferFile.getAbsolutePath());
         }
         runOnUiThread(() -> {
-            tvReSnifferStatus.setText("Arrêté — fichier : " + fileName);
+            tvReSnifferStatus.setText(getString(R.string.diag_sniffer_stopped, fileName));
             tvReSnifferStatus.setTextColor(0xFFFF5252);
-            android.widget.Toast.makeText(this, "Sniffer arrêté.", android.widget.Toast.LENGTH_SHORT).show();
+            android.widget.Toast.makeText(this, getString(R.string.toast_sniffer_stopped), android.widget.Toast.LENGTH_SHORT).show();
         });
     }
 
     private void snapshotReSniffer() {
         if (mReSnifferFile == null) {
-            android.widget.Toast.makeText(this, "Démarrer le sniffer d'abord.", android.widget.Toast.LENGTH_SHORT).show();
+            android.widget.Toast.makeText(this, getString(R.string.toast_sniffer_start_first), android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
         final String p = mReSnifferFile.getAbsolutePath();
@@ -1171,13 +1171,13 @@ public class DiagActivity extends AppCompatActivity {
             + " && echo '--- BROADCASTS ---' >> " + p
             + " && dumpsys activity broadcasts history 2>/dev/null >> " + p;
         AdbLocalClient.executeShell(this, cmd);
-        android.widget.Toast.makeText(this, "Snapshot injecté dans le fichier.", android.widget.Toast.LENGTH_SHORT).show();
+        android.widget.Toast.makeText(this, getString(R.string.toast_snapshot_done), android.widget.Toast.LENGTH_SHORT).show();
     }
 
     private void exportReSniffer() {
         java.io.File logFile = mReSnifferFile;
         if (logFile == null || !logFile.exists() || logFile.length() == 0) {
-            android.widget.Toast.makeText(this, "Aucun fichier sniffer à exporter.", android.widget.Toast.LENGTH_SHORT).show();
+            android.widget.Toast.makeText(this, getString(R.string.toast_sniffer_no_file), android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
         try {
