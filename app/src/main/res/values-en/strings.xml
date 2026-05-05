@@ -190,4 +190,10 @@
     <string name="toast_no_result_to_share">No result to share.</string>
     <string name="diag_btn_size_restore">RESTORE</string>
     <string name="diag_btn_size_full">FULL TEST</string>
+    <!-- Section 6 — Storage cleanup -->
+    <string name="diag_s6_title">6. Storage Cleanup</string>
+    <string name="diag_s6_desc">Deletes DashCast-generated log and report files: byd_log_*.log, byd_report_*.txt, BYD_RE_Sniffer_*.txt, cluster_live.png. Also clears the in-memory log buffer. ADB keys (adb.key / adb.pub) are NOT deleted.</string>
+    <string name="diag_btn_cleanup">🗑️ Delete trace files</string>
+    <string name="diag_cleanup_running">Cleaning up…</string>
+    <string name="diag_cleanup_done">%1$d file(s) deleted — remaining storage: %2$s</string>
 </resources>

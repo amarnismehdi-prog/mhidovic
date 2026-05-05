@@ -285,4 +285,66 @@ public class AppLogger {
         context.startActivity(Intent.createChooser(intent,
                 chooserTitle != null ? chooserTitle : "Partager…"));
     }
+
+    // ── Storage cleanup ───────────────────────────────────────────────────────
+
+    /**
+     * Deletes all DashCast-generated files from app external and cache storage:
+     *   - byd_log_*.log         (AppLogger.saveToFile)
+     *   - byd_report_*.txt      (SysInfoActivity)
+     *   - BYD_RE_Sniffer_*.txt  (DiagActivity)
+     *   - cluster_live.png      (AdbLocalClient.captureClusterDisplay)
+     * ADB keys (adb.key / adb.pub) in getFilesDir() are NOT deleted.
+     * Also clears the in-memory log buffer.
+     *
+     * @return number of files deleted
+     */
+    public static int cleanupFiles(Context context) {
+        int deleted = 0;
+
+        // External files dir: byd_log_*, byd_report_*, BYD_RE_Sniffer_*
+        File extDir = context.getExternalFilesDir(null);
+        if (extDir != null && extDir.exists()) {
+            File[] files = extDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    String name = f.getName();
+                    if (name.startsWith("byd_log_")
+                            || name.startsWith("byd_report_")
+                            || name.startsWith("BYD_RE_Sniffer_")) {
+                        if (f.delete()) deleted++;
+                    }
+                }
+            }
+        }
+
+        // Internal files dir: same patterns (fallback when external not available)
+        File intDir = context.getFilesDir();
+        if (intDir != null && intDir.exists()) {
+            File[] files = intDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    String name = f.getName();
+                    if (name.startsWith("byd_log_")
+                            || name.startsWith("byd_report_")
+                            || name.startsWith("BYD_RE_Sniffer_")) {
+                        if (f.delete()) deleted++;
+                    }
+                }
+            }
+        }
+
+        // External cache: cluster_live.png
+        File extCache = context.getExternalCacheDir();
+        if (extCache != null && extCache.exists()) {
+            File png = new File(extCache, "cluster_live.png");
+            if (png.exists() && png.delete()) deleted++;
+        }
+
+        // Clear in-memory buffer too
+        clear();
+
+        Log.i("AppLogger", "cleanupFiles: " + deleted + " file(s) deleted");
+        return deleted;
+    }
 }

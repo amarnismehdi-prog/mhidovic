@@ -451,5 +451,50 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- 6. NETTOYAGE STOCKAGE -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#ffffff"
+            android:elevation="3dp"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginHorizontal="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diag_s6_title"
+                android:textSize="18sp"
+                android:textColor="#3B4252"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diag_s6_desc"
+                android:textSize="12sp"
+                android:textColor="#4C566A"
+                android:layout_marginBottom="12dp"/>
+
+            <Button
+                android:id="@+id/btn_cleanup_files"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diag_btn_cleanup"
+                android:backgroundTint="#BF616A"/>
+
+            <TextView
+                android:id="@+id/tv_cleanup_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="12sp"
+                android:textColor="#4C566A"
+                android:text=""/>
+
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

@@ -191,4 +191,10 @@
     <string name="toast_no_result_to_share">Nessun risultato da condividere.</string>
     <string name="diag_btn_size_restore">RESTORE</string>
     <string name="diag_btn_size_full">FULL TEST</string>
+    <!-- Sezione 6 — Pulizia archivio -->
+    <string name="diag_s6_title">6. Pulizia archivio</string>
+    <string name="diag_s6_desc">Elimina i file di log e report generati da DashCast: byd_log_*.log, byd_report_*.txt, BYD_RE_Sniffer_*.txt, cluster_live.png. Svuota anche il buffer log in memoria. Le chiavi ADB (adb.key / adb.pub) NON vengono eliminate.</string>
+    <string name="diag_btn_cleanup">🗑️ Elimina file di traccia</string>
+    <string name="diag_cleanup_running">Pulizia in corso…</string>
+    <string name="diag_cleanup_done">%1$d file eliminati — spazio rimanente: %2$s</string>
 </resources>

@@ -191,4 +191,10 @@
     <string name="toast_no_result_to_share">Kein Ergebnis zum Teilen.</string>
     <string name="diag_btn_size_restore">RESTORE</string>
     <string name="diag_btn_size_full">FULL TEST</string>
+    <!-- Section 6 — Speicher bereinigen -->
+    <string name="diag_s6_title">6. Speicherbereinigung</string>
+    <string name="diag_s6_desc">Löscht von DashCast erzeugte Log- und Berichtsdateien: byd_log_*.log, byd_report_*.txt, BYD_RE_Sniffer_*.txt, cluster_live.png. Löscht auch den In-Memory-Logpuffer. ADB-Schlüssel (adb.key / adb.pub) werden NICHT gelöscht.</string>
+    <string name="diag_btn_cleanup">🗑️ Trace-Dateien löschen</string>
+    <string name="diag_cleanup_running">Bereinigung läuft…</string>
+    <string name="diag_cleanup_done">%1$d Datei(en) gelöscht — verbleibender Speicher: %2$s</string>
 </resources>

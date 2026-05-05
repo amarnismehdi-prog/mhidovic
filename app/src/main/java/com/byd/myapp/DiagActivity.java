@@ -76,6 +76,10 @@ public class DiagActivity extends AppCompatActivity {
     private TextView tvReSnifferStatus;
     private java.io.File mReSnifferFile = null;
 
+    // [6] Nettoyage stockage
+    private Button   btnCleanupFiles;
+    private TextView tvCleanupResult;
+
     @Override
     protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LocaleHelper.applyLocale(base));
@@ -143,6 +147,11 @@ public class DiagActivity extends AppCompatActivity {
         btnReSnifferExport   = (Button)   findViewById(R.id.btn_re_sniffer_export);
         tvReSnifferStatus    = (TextView) findViewById(R.id.tv_re_sniffer_status);
         tvReSnifferStatus.setTag("RE Sniffer");
+
+        // [6] Nettoyage stockage
+        btnCleanupFiles = (Button)   findViewById(R.id.btn_cleanup_files);
+        tvCleanupResult = (TextView) findViewById(R.id.tv_cleanup_result);
+        btnCleanupFiles.setOnClickListener(v -> cleanupFilesAction());
 
         btnReSnifferStart   .setOnClickListener(v -> startReSniffer());
         btnReSnifferStop    .setOnClickListener(v -> stopReSniffer());
@@ -1192,5 +1201,36 @@ public class DiagActivity extends AppCompatActivity {
         } catch (Exception e) {
             AppLogger.e("RESniffer", "Export erreur", e);
         }
+    }
+
+    private void cleanupFilesAction() {
+        btnCleanupFiles.setEnabled(false);
+        tvCleanupResult.setText(getString(R.string.diag_cleanup_running));
+        new Thread(() -> {
+            int deleted = AppLogger.cleanupFiles(DiagActivity.this);
+            // Measure remaining storage usage after cleanup
+            long usedBytes = 0;
+            java.io.File extDir = getExternalFilesDir(null);
+            if (extDir != null && extDir.exists()) {
+                java.io.File[] files = extDir.listFiles();
+                if (files != null) for (java.io.File f : files) usedBytes += f.length();
+            }
+            java.io.File extCache = getExternalCacheDir();
+            if (extCache != null && extCache.exists()) {
+                java.io.File[] files = extCache.listFiles();
+                if (files != null) for (java.io.File f : files) usedBytes += f.length();
+            }
+            final int finalDeleted = deleted;
+            final String sizeStr = usedBytes < 1024
+                    ? usedBytes + " B"
+                    : usedBytes < 1024 * 1024
+                            ? (usedBytes / 1024) + " KB"
+                            : String.format(java.util.Locale.US, "%.1f MB", usedBytes / 1048576.0);
+            runOnUiThread(() -> {
+                btnCleanupFiles.setEnabled(true);
+                tvCleanupResult.setText(getString(R.string.diag_cleanup_done, finalDeleted, sizeStr));
+                AppLogger.i("Cleanup", finalDeleted + " file(s) deleted, remaining: " + sizeStr);
+            });
+        }, "cleanup-thread").start();
     }
 }
