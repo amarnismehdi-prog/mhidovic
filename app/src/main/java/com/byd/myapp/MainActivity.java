@@ -67,6 +67,9 @@ public class MainActivity extends AppCompatActivity
     private static final String PREFS_NAME         = "byd_app_prefs";
     /** Package of the app sent to the main display — persisted to survive Activity recreation */
     private static final String PREF_MAIN_PKG      = "main_display_pkg";
+    /** Package/name of the app currently active on the cluster — persisted to survive Activity recreation */
+    private static final String PREF_CLUSTER_PKG   = "cluster_active_pkg";
+    private static final String PREF_CLUSTER_NAME  = "cluster_active_name";
     /** sendInfo code for cluster screen size: 29=8.8", 30=12.3" (default Seal EU), 31=10.25" */
     private static final String PREF_CLUSTER_TYPE  = "cluster_screen_size_cmd";
     private static final int    CLUSTER_TYPE_DEFAULT = 30;
@@ -450,6 +453,24 @@ public class MainActivity extends AppCompatActivity
                 updateDashboardStatus(null);
                 btnActivateCluster.setEnabled(true);
 
+                // Restore active cluster app if Activity was recreated (in-memory state lost).
+                // mCurrentDashboardPkg is only null here if the Activity instance was killed
+                // while in background (Home pressed) and a new instance was recreated.
+                if (mCurrentDashboardPkg == null) {
+                    SharedPreferences _p = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    String _pkg  = _p.getString(PREF_CLUSTER_PKG, null);
+                    String _name = _p.getString(PREF_CLUSTER_NAME, null);
+                    if (_pkg != null) {
+                        mCurrentDashboardPkg = _pkg;
+                        mCurrentDashboardApp = _name;
+                        mAdapter.setCurrentPackage(_pkg);
+                        updateDashboardStatus(_name);
+                        updateControlLabel();
+                        showMirrorView(); // makes panelClusterControl visible
+                        AppLogger.i(TAG, "cluster active app restored: " + _pkg);
+                    }
+                }
+
                 // If the panel is visible (app already active), start/reconfigure the mirror
                 if (panelClusterControl.getVisibility() == View.VISIBLE) {
                     attemptStartMirrorWithCurrentHolder();
@@ -481,7 +502,9 @@ public class MainActivity extends AppCompatActivity
                 mCurrentDashboardPkg = null;
                 btnActivateCluster.setEnabled(true);
                 mMainDisplayPkg = null;
-                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().remove(PREF_MAIN_PKG).apply();
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                        .remove(PREF_MAIN_PKG)
+                        .remove(PREF_CLUSTER_PKG).remove(PREF_CLUSTER_NAME).apply();
                 clearSplitState();
                 mAdapter.setCurrentPackage(null);
                 mAdapter.setMainPackage(null);
@@ -568,6 +591,9 @@ public class MainActivity extends AppCompatActivity
                 if (launched) {
                     mCurrentDashboardApp = appName;
                     mCurrentDashboardPkg = pkgName;
+                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                            .putString(PREF_CLUSTER_PKG, pkgName)
+                            .putString(PREF_CLUSTER_NAME, appName).apply();
                     mAdapter.setCurrentPackage(pkgName);
                     startTrackingApp(pkgName); // detect external kill (swipe task switcher)
                     updateDashboardStatus(appName);
@@ -587,6 +613,8 @@ public class MainActivity extends AppCompatActivity
         // Clean up cluster state before move
         mCurrentDashboardApp = null;
         mCurrentDashboardPkg = null;
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .remove(PREF_CLUSTER_PKG).remove(PREF_CLUSTER_NAME).apply();
         // Force-stop the secondary slot in split mode (prevents it from staying on display 1)
         if (mSecondDashboardPkg != null) {
             AdbLocalClient.forceStopApp(this, mSecondDashboardPkg, null);
@@ -877,6 +905,8 @@ public class MainActivity extends AppCompatActivity
         stopTrackingApp();
         mCurrentDashboardApp = null;
         mCurrentDashboardPkg = null;
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .remove(PREF_CLUSTER_PKG).remove(PREF_CLUSTER_NAME).apply();
         clearSplitState();
         mAdapter.setCurrentPackage(null);
         updateDashboardStatus(null);
@@ -1163,6 +1193,8 @@ public class MainActivity extends AppCompatActivity
                         }
                         mCurrentDashboardApp = null;
                         mCurrentDashboardPkg = null;
+                        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                                .remove(PREF_CLUSTER_PKG).remove(PREF_CLUSTER_NAME).apply();
                         clearSplitState();
                         mAdapter.setCurrentPackage(null);
                         updateDashboardStatus(null);
@@ -1224,6 +1256,8 @@ public class MainActivity extends AppCompatActivity
                         }
                         mCurrentDashboardApp = null;
                         mCurrentDashboardPkg = null;
+                        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                                .remove(PREF_CLUSTER_PKG).remove(PREF_CLUSTER_NAME).apply();
                         clearSplitState();
                         mAdapter.setCurrentPackage(null);
                         updateDashboardStatus(null);
