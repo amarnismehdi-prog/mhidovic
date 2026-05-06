@@ -168,6 +168,23 @@
                 <Button android:id="@+id/btn_display_size_share" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/diag_btn_share_result"/>
             </LinearLayout>
 
+            <!-- Garde-fou écran principal -->
+            <Button
+                android:id="@+id/btn_reset_main_overscan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diag_btn_reset_main_overscan"
+                android:backgroundTint="#D08770"
+                android:layout_marginBottom="8dp"/>
+            <TextView
+                android:id="@+id/tv_reset_main_overscan_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#4C566A"
+                android:layout_marginBottom="8dp"
+                android:text=""/>
+
             <TextView
                 android:id="@+id/tv_display1_result"
                 android:layout_width="match_parent"

@@ -497,12 +497,17 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
         // stay within the safe area [INSET_H, INSET_V, 1920-INSET_H, 720-INSET_V].
         // This is the only approach that works on FLAG_PRESENTATION VirtualDisplays (Freedom)
         // because apps there are not tracked by the standard WM task system.
-        AdbLocalClient.executeShell(this,
-                "wm overscan " + CLUSTER_INSET_H + "," + CLUSTER_INSET_V
-                + "," + CLUSTER_INSET_H + "," + CLUSTER_INSET_V
-                + " -d " + displayId);
-        AppLogger.i(TAG, "wm overscan applied on display " + displayId
-                + " inset=" + CLUSTER_INSET_H + "," + CLUSTER_INSET_V);
+        // SAFETY GUARD: never apply overscan to the main display (id 0 or negative).
+        if (displayId > 0) {
+            AdbLocalClient.executeShell(this,
+                    "wm overscan " + CLUSTER_INSET_H + "," + CLUSTER_INSET_V
+                    + "," + CLUSTER_INSET_H + "," + CLUSTER_INSET_V
+                    + " -d " + displayId);
+            AppLogger.i(TAG, "wm overscan applied on display " + displayId
+                    + " inset=" + CLUSTER_INSET_H + "," + CLUSTER_INSET_V);
+        } else {
+            AppLogger.w(TAG, "wm overscan skipped: displayId=" + displayId + " (must be > 0)");
+        }
 
         if (mListener != null) {
             mListener.onClusterDisplayConnected(display, displayId);

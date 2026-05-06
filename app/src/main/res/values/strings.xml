@@ -190,6 +190,8 @@
     <string name="toast_no_result_to_share">Pas de résultat à partager.</string>
     <string name="diag_btn_size_restore">RESTORE</string>
     <string name="diag_btn_size_full">FULL TEST</string>
+    <string name="diag_btn_reset_main_overscan">⚠️ Reset overscan écran principal (display 0)</string>
+    <string name="diag_reset_main_overscan_done">Reset overscan display 0 OK — wm overscan reset -d 0</string>
     <!-- Section 6 — Nettoyage stockage -->
     <string name="diag_s6_title">6. Nettoyage du stockage</string>
     <string name="diag_s6_desc">Supprime les fichiers de logs et rapports générés par DashCast : byd_log_*.log, byd_report_*.txt, BYD_RE_Sniffer_*.txt, cluster_live.png. Vide également le buffer mémoire des logs. Les clés ADB (adb.key / adb.pub) ne sont PAS supprimées.</string>

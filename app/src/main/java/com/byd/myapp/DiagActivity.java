@@ -39,6 +39,8 @@ public class DiagActivity extends AppCompatActivity {
     private Button   btnDisplaySizeRestore;  // restore
     private Button   btnDisplaySizeFull;     // full diagnostic
     private Button   btnDisplaySizeShare;
+    private Button   btnResetMainOverscan;   // safety: reset wm overscan on display 0
+    private TextView tvResetMainOverscanResult;
 
     // [4] Analyses Système
     private Button   btnDumpSfMirror;
@@ -109,6 +111,10 @@ public class DiagActivity extends AppCompatActivity {
         btnDisplaySizeRestore  = (Button)   findViewById(R.id.btn_display_size_restore);
         btnDisplaySizeFull     = (Button)   findViewById(R.id.btn_display_size_full);
         btnDisplaySizeShare    = (Button)   findViewById(R.id.btn_display_size_share);
+
+        btnResetMainOverscan       = (Button)   findViewById(R.id.btn_reset_main_overscan);
+        tvResetMainOverscanResult  = (TextView) findViewById(R.id.tv_reset_main_overscan_result);
+        btnResetMainOverscan.setOnClickListener(v -> resetMainDisplayOverscan());
 
         btnDumpSfMirror = (Button) findViewById(R.id.btn_dump_sf_mirror);
         tvSfDumpResult = (TextView) findViewById(R.id.tv_sf_dump_result);
@@ -1201,6 +1207,28 @@ public class DiagActivity extends AppCompatActivity {
         } catch (Exception e) {
             AppLogger.e("RESniffer", "Export erreur", e);
         }
+    }
+
+    private void resetMainDisplayOverscan() {
+        btnResetMainOverscan.setEnabled(false);
+        AdbLocalClient.executeShellWithResult(this, "wm overscan reset -d 0",
+                new AdbLocalClient.Callback() {
+            @Override public void onSuccess(String result) {
+                runOnUiThread(() -> {
+                    btnResetMainOverscan.setEnabled(true);
+                    tvResetMainOverscanResult.setText(
+                            getString(R.string.diag_reset_main_overscan_done));
+                    AppLogger.i("Overscan", "reset -d 0 OK: " + result.trim());
+                });
+            }
+            @Override public void onError(String error) {
+                runOnUiThread(() -> {
+                    btnResetMainOverscan.setEnabled(true);
+                    tvResetMainOverscanResult.setText("ERROR: " + error.trim());
+                    AppLogger.e("Overscan", "reset -d 0 FAILED: " + error);
+                });
+            }
+        });
     }
 
     private void cleanupFilesAction() {
