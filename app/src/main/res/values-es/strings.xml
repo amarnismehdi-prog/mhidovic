@@ -135,6 +135,12 @@
     <string name="diag_s3_initial">Tamaño de pantalla</string>
     <string name="diag_s3_display1_initial">Restaurar pantalla del clúster</string>
     <string name="diag_btn_restore_display">Restaurar pantalla</string>
+    <string name="diag_sadas_title">ADAS Cluster (cmd 12 / 13)</string>
+    <string name="diag_sadas_desc">Mostrar u ocultar la superposición ADAS en el cuadro de instrumentos. Comandos sendInfo(1000, 12/13). Sin efecto visible en el Seal EU (cluster 2D), probar cuando haya una superposición ADAS activa.</string>
+    <string name="diag_adas_initial">–</string>
+    <string name="diag_adas_sending">Enviando cmd %1$d…</string>
+    <string name="diag_btn_adas_show">显示 ADAS (cmd 12)</string>
+    <string name="diag_btn_adas_hide">关闭 ADAS (cmd 13)</string>
     <string name="diag_s4_title">4. Análisis del sistema (SurfaceFlinger)</string>
     <string name="diag_dumpsys_initial">Dumpsys window displays: --</string>
     <string name="diag_btn_run_dumpsys">Ejecutar dumpsys window displays</string>

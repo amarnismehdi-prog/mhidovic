@@ -47,6 +47,11 @@ public class DiagActivity extends AppCompatActivity {
     private Button   btnDumpSfMirror;
     private TextView tvSfDumpResult;
 
+    // ADAS Cluster (cmd 12 / 13)
+    private Button   btnAdasShow;
+    private Button   btnAdasHide;
+    private TextView tvAdasResult;
+
     // JNI Qt Surface Probe
     private Button   btnTest13;
     private Button   btnJniStartProbe;
@@ -128,6 +133,14 @@ public class DiagActivity extends AppCompatActivity {
         btnDumpSfMirror = (Button) findViewById(R.id.btn_dump_sf_mirror);
         tvSfDumpResult = (TextView) findViewById(R.id.tv_sf_dump_result);
         tvSfDumpResult.setTag("SurfaceFlinger Dump");
+
+        // ADAS Cluster
+        btnAdasShow  = (Button)   findViewById(R.id.btn_adas_show);
+        btnAdasHide  = (Button)   findViewById(R.id.btn_adas_hide);
+        tvAdasResult = (TextView) findViewById(R.id.tv_adas_result);
+        tvAdasResult.setTag("ADAS Cluster");
+        btnAdasShow.setOnClickListener(v -> sendAdasCmd(12));
+        btnAdasHide.setOnClickListener(v -> sendAdasCmd(13));
         btnAutoDisplayStart  = (Button)   findViewById(R.id.btn_auto_display_start);
         btnAutoDisplayStop   = (Button)   findViewById(R.id.btn_auto_display_stop);
         tvAutoDisplayResult  = (TextView) findViewById(R.id.tv_auto_display_result);
@@ -1013,6 +1026,40 @@ public class DiagActivity extends AppCompatActivity {
     private static final String RE_SNIFFER_PREFIX  = "BYD_RE_Sniffer_";
 
     // =========================================================================
+    // ADAS Cluster — sendInfo(1000, 12) / sendInfo(1000, 13)
+    // =========================================================================
+
+    private void sendAdasCmd(final int cmd) {
+        btnAdasShow.setEnabled(false);
+        btnAdasHide.setEnabled(false);
+        tvAdasResult.setText(getString(R.string.diag_adas_sending, cmd));
+        tvAdasResult.setBackgroundColor(0xFF111A1A);
+        AppLogger.log("DiagADAS", "sendInfo(1000, " + cmd + ")");
+
+        AdbLocalClient.sendInfo(this, 1000, cmd, "", new AdbLocalClient.Callback() {
+            @Override public void onSuccess(final String report) {
+                runOnUiThread(() -> {
+                    String label = cmd == 12 ? "显示ADAS ✅" : "关闭ADAS ✅";
+                    tvAdasResult.setBackgroundColor(0xFF1A2A1A);
+                    tvAdasResult.setText(label + "\n" + report);
+                    btnAdasShow.setEnabled(true);
+                    btnAdasHide.setEnabled(true);
+                    AppLogger.log("DiagADAS", "cmd=" + cmd + " → " + report);
+                });
+            }
+            @Override public void onError(final String error) {
+                runOnUiThread(() -> {
+                    tvAdasResult.setBackgroundColor(0xFF2A1A1A);
+                    tvAdasResult.setText("❌ cmd=" + cmd + " " + error);
+                    btnAdasShow.setEnabled(true);
+                    btnAdasHide.setEnabled(true);
+                    AppLogger.log("DiagADAS", "ERREUR cmd=" + cmd + ": " + error);
+                });
+            }
+        });
+    }
+
+    // =========================================================================
     // Partage rapide — appui long sur n'importe quel TextView résultat
     // =========================================================================
 
@@ -1021,7 +1068,7 @@ public class DiagActivity extends AppCompatActivity {
             tvAdbLocalResult, tvDaemonVdResult, tvDisplaySizeResult,
             tvDisplay1Result, tvDumpsysResult, tvTest13Result, tvSfDumpResult,
             tvAutoDisplayResult, tvFissionResult, tvReSnifferStatus,
-            tvResizeDiagResult
+            tvResizeDiagResult, tvAdasResult
         };
         for (TextView tv : results) {
             if (tv == null) continue;

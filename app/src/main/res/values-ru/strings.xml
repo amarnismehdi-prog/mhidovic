@@ -185,6 +185,12 @@
     <string name="diag_s3_initial">Размер экрана</string>
     <string name="diag_s3_display1_initial">Восстановить дисплей кластера</string>
     <string name="diag_btn_restore_display">Восстановить дисплей</string>
+    <string name="diag_sadas_title">ADAS Кластер (cmd 12 / 13)</string>
+    <string name="diag_sadas_desc">Показать или скрыть оверлей ADAS на приборной панели. Команды sendInfo(1000, 12/13). Нет видимого эффекта на Seal EU (2D-кластер), тестировать при активном оверлее ADAS.</string>
+    <string name="diag_adas_initial">–</string>
+    <string name="diag_adas_sending">Отправка cmd %1$d…</string>
+    <string name="diag_btn_adas_show">显示 ADAS (cmd 12)</string>
+    <string name="diag_btn_adas_hide">关闭 ADAS (cmd 13)</string>
     <string name="diag_s4_title">4. Анализ системы (SurfaceFlinger)</string>
     <string name="diag_dumpsys_initial">Dumpsys window displays: --</string>
     <string name="diag_btn_run_dumpsys">Запустить dumpsys window displays</string>
