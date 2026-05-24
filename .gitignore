@@ -18,7 +18,6 @@ local.properties
 # Ne pas committer la clé de signature.
 # Copier platform.keystore dans app/keystore/ avant de builder.
 # Voir README.md section "Signature".
-app/keystore/*.keystore
 app/keystore/*.jks
 
 # ── Fichiers générés Android Studio ────────────────────────

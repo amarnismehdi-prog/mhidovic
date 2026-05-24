@@ -33,20 +33,20 @@ jobs:
       - name: Prepare keystore
         run: |
           mkdir -p app/keystore
-          if [ -n "${{ secrets.PLATFORM_KEYSTORE_B64 }}" ]; then
+          if [ -f "app/keystore/platform.keystore" ]; then
+            echo "Using committed debug keystore"
+          elif [ -n "${{ secrets.PLATFORM_KEYSTORE_B64 }}" ]; then
             echo "Using platform keystore from secret"
             echo "${{ secrets.PLATFORM_KEYSTORE_B64 }}" | base64 -d > app/keystore/platform.keystore
           else
-            echo "Generating standard debug keystore (probe-only build)"
+            echo "Generating fallback debug keystore"
             keytool -genkeypair \
               -keystore app/keystore/platform.keystore \
               -alias androiddebugkey \
               -keypass android \
               -storepass android \
-              -dname "CN=Android Debug, O=Android, C=US" \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000
+              -dname "CN=DashCast,O=DashCast,C=MA" \
+              -keyalg RSA -keysize 2048 -validity 36500
           fi
 
       - name: Build debug APK
