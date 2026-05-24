@@ -887,16 +887,20 @@ public class MainActivity extends AppCompatActivity
                 FloatingRemoteButton.show();
             }
         } else if (!mBindRequested) {
-            // Check if the service is already running (e.g. Activity re-opened)
             if (ClusterService.sIsRunning) {
+                // Service already running in background — just bind to it.
                 mBindRequested = true;
                 tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
                 Intent svcIntent = new Intent(this, ClusterService.class);
                 bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
             } else {
-                // Feature requested: DO NOT start the service automatically.
-                // The cluster will only be activated when the user clicks 'Activate Cluster'.
-                AppLogger.d(TAG, "Not starting ClusterService automatically. Waiting for user action.");
+                // Auto-start if the setting is enabled (covers opening the app manually after boot).
+                boolean autoStart = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                        .getBoolean(SettingsActivity.PREF_BOOT_AUTO_START, false);
+                if (autoStart) {
+                    AppLogger.d(TAG, "onStart: auto-start enabled — activating cluster");
+                    activateCluster();
+                }
             }
         }
         // Bind OsmAnd+ AIDL service so stop-navigation works without delay
@@ -1969,24 +1973,24 @@ public class MainActivity extends AppCompatActivity
                 + " bindRequested=" + mBindRequested
                 + " displayId=" + (mClusterService != null ? mClusterService.getDisplayId() : "N/A"));
 
+        String bootPkg = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(SettingsActivity.PREF_BOOT_DEFAULT_APP, null);
+
         if (!mServiceBound || mClusterService == null) {
-            // Service stopped or not started yet.
-            // Start it: ClusterService.onCreate() → mDisplayHelper.start() → sendInfo(30+16).
-            // onClusterDisplayConnected() will fire and enable the button.
+            // Service stopped or not started yet — start it and pass the auto-launch pkg.
             if (!mBindRequested) {
                 mBindRequested = true;
                 Intent svcIntent = new Intent(this, ClusterService.class);
+                if (bootPkg != null) svcIntent.putExtra(ClusterService.EXTRA_AUTO_LAUNCH_PKG, bootPkg);
                 startForegroundService(svcIntent);
                 bindService(svcIntent, mServiceConn, BIND_AUTO_CREATE);
             }
             tvDashboardStatus.setText(getString(R.string.status_starting_cluster));
-                setStatusDot(DOT_COLOR_PENDING);
-                // Button is re-enabled natively by onClusterDisplayConnected or onClusterDisplayDisconnected callbacks.
+            setStatusDot(DOT_COLOR_PENDING);
         } else {
-            // Service already up → manually restart projection natively without ADB
-            AppLogger.log(TAG, "Calling native restartProjection via ClusterService");
-            mClusterService.restartProjection();
-            // onClusterDisplayConnected / onClusterDisplayDisconnected will re-enable the button
+            // Service already up → force-restart so OsmAnd+ re-launches on the cluster.
+            AppLogger.log(TAG, "activateCluster: forceRestartProjection → " + bootPkg);
+            mClusterService.forceRestartProjection(bootPkg);
         }
     }
 

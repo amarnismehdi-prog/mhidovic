@@ -88,7 +88,27 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
         mLauncher       = new DashboardLauncher(this);
         mMirrorManager  = new ClusterMirrorManager();
         mInputForwarder = new ClusterInputForwarder(this);
-        
+
+        // First-run defaults: enable boot auto-start and set OsmAnd+ as the cluster app
+        // if the user has never configured these settings.
+        android.content.SharedPreferences prefs =
+                getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE);
+        android.content.SharedPreferences.Editor ed = prefs.edit();
+        boolean changed = false;
+        if (!prefs.contains(SettingsActivity.PREF_BOOT_AUTO_START)) {
+            ed.putBoolean(SettingsActivity.PREF_BOOT_AUTO_START, true);
+            changed = true;
+        }
+        if (!prefs.contains(SettingsActivity.PREF_BOOT_DEFAULT_APP)) {
+            ed.putString(SettingsActivity.PREF_BOOT_DEFAULT_APP, "net.osmand.plus");
+            changed = true;
+        }
+        if (!prefs.contains(SettingsActivity.PREF_LIGHTWEIGHT_MODE)) {
+            ed.putBoolean(SettingsActivity.PREF_LIGHTWEIGHT_MODE, true);
+            changed = true;
+        }
+        if (changed) ed.apply();
+
         // Pre-start the MirrorDaemon unless Lightweight Mode is active.
         // Lightweight Mode skips the mirror daemon entirely — saves the app_process RAM/CPU cost
         // for setups that only push an app to the cluster (e.g. OsmAnd+) with no touch mirror.
@@ -656,10 +676,16 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
             mListener.onClusterDisplayConnected(display, displayId);
         }
 
-        // Boot auto-launch: fire once when the cluster is first ready
-        if (mPendingAutoLaunchPkg != null) {
-            final String pkg = mPendingAutoLaunchPkg;
-            mPendingAutoLaunchPkg = null;
+        // Auto-launch: use the pending pkg if set, otherwise fall back to the saved default app.
+        // This covers boot (EXTRA_AUTO_LAUNCH_PKG), manual activation, and reconnect after reset.
+        String pkgToLaunch = mPendingAutoLaunchPkg;
+        if (pkgToLaunch == null) {
+            pkgToLaunch = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE)
+                    .getString(SettingsActivity.PREF_BOOT_DEFAULT_APP, null);
+        }
+        mPendingAutoLaunchPkg = null;
+        if (pkgToLaunch != null && !pkgToLaunch.isEmpty()) {
+            final String pkg = pkgToLaunch;
             AppLogger.i(TAG, "Cluster ready — auto-launching " + pkg);
             launchOnDashboard(pkg, success ->
                     AppLogger.i(TAG, "Auto-launch " + pkg + " → " + (success ? "OK" : "FAILED")));
