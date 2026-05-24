@@ -17,10 +17,14 @@ public class BootReceiver extends BroadcastReceiver {
             
             if (autoStartEnabled) {
                 AppLogger.i("BootReceiver", "DashCast Auto-Boot: Starting projection automatically...");
-                
-                // Démarrer automatiquement le service de projection (ClusterService)
+
                 try {
                     Intent serviceIntent = new Intent(context, ClusterService.class);
+                    String bootPkg = prefs.getString(SettingsActivity.PREF_BOOT_DEFAULT_APP, null);
+                    if (bootPkg != null && !bootPkg.isEmpty()) {
+                        serviceIntent.putExtra(ClusterService.EXTRA_AUTO_LAUNCH_PKG, bootPkg);
+                        AppLogger.i("BootReceiver", "Auto-launch app: " + bootPkg);
+                    }
                     context.startForegroundService(serviceIntent);
                 } catch (Exception e) {
                     AppLogger.e("BootReceiver", "Error starting ClusterService on boot: " + e.getMessage());

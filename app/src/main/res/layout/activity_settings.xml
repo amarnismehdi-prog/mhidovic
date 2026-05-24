@@ -544,6 +544,66 @@
                                 android:layout_gravity="center_vertical"/>
                         </LinearLayout>
 
+                        <!-- Mode léger : désactive le MirrorDaemon et le bouton flottant -->
+                        <LinearLayout
+                            style="@style/Widget.DashCast.ListItem">
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_marginEnd="16dp"
+                                android:layout_gravity="center_vertical"
+                                android:scaleType="fitCenter"
+                                android:tint="@color/md_on_surface_variant"
+                                android:src="@drawable/ic_tune"/>
+                            <LinearLayout
+                                style="@style/Widget.DashCast.ListItem.Content">
+                                <TextView
+                                    style="@style/Widget.DashCast.ListItem.Headline"
+                                    android:text="@string/settings_lightweight_mode_title"/>
+                                <TextView
+                                    style="@style/Widget.DashCast.ListItem.Support"
+                                    android:text="@string/settings_lightweight_mode_support"/>
+                            </LinearLayout>
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/cb_lightweight_mode"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"/>
+                        </LinearLayout>
+
+                        <!-- Application lancée automatiquement sur le cluster au démarrage -->
+                        <LinearLayout
+                            android:id="@+id/row_boot_app"
+                            style="@style/Widget.DashCast.ListItem"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_marginEnd="16dp"
+                                android:layout_gravity="center_vertical"
+                                android:scaleType="fitCenter"
+                                android:tint="@color/md_on_surface_variant"
+                                android:src="@drawable/ic_play_circle"/>
+                            <LinearLayout
+                                style="@style/Widget.DashCast.ListItem.Content">
+                                <TextView
+                                    style="@style/Widget.DashCast.ListItem.Headline"
+                                    android:text="@string/settings_boot_app_title"/>
+                                <TextView
+                                    android:id="@+id/tv_boot_app_name"
+                                    style="@style/Widget.DashCast.ListItem.Support"
+                                    android:text="@string/settings_boot_app_none"/>
+                            </LinearLayout>
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_arrow_forward"
+                                android:tint="@color/md_on_surface_variant"/>
+                        </LinearLayout>
+
                         <!-- Reconnexion automatique -->
                         <LinearLayout
                             style="@style/Widget.DashCast.ListItem">

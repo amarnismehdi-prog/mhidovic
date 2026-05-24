@@ -1,0 +1,60 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Gradle execute permission
+        run: chmod +x gradlew
+
+      # Use platform keystore from secret if available, otherwise generate a
+      # standard debug keystore so the APK can still be installed via ADB.
+      # NOTE: the probe tool works with either key. Full cluster features
+      # require the real BYD platform keystore (store as PLATFORM_KEYSTORE_B64).
+      - name: Prepare keystore
+        run: |
+          mkdir -p app/keystore
+          if [ -n "${{ secrets.PLATFORM_KEYSTORE_B64 }}" ]; then
+            echo "Using platform keystore from secret"
+            echo "${{ secrets.PLATFORM_KEYSTORE_B64 }}" | base64 -d > app/keystore/platform.keystore
+          else
+            echo "Generating standard debug keystore (probe-only build)"
+            keytool -genkeypair \
+              -keystore app/keystore/platform.keystore \
+              -alias androiddebugkey \
+              -keypass android \
+              -storepass android \
+              -dname "CN=Android Debug, O=Android, C=US" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000
+          fi
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DashCast-debug
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30

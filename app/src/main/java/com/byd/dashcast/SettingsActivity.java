@@ -47,6 +47,8 @@ public class SettingsActivity extends AppCompatActivity {
     public static final boolean DEFAULT_OTA_PRERELEASE = false;
     // ── Boot / UI toggles ───────────────────────────────────────────────────────────────
     public static final String PREF_BOOT_AUTO_START       = "boot_auto_start_enabled";
+    public static final String PREF_BOOT_DEFAULT_APP      = "boot_default_app_pkg";
+    public static final String PREF_LIGHTWEIGHT_MODE      = "lightweight_mode";
     public static final String PREF_SHOW_CATEGORY_FILTERS = "show_category_filters";
     public static final String PREF_RECONNECT_POPUP       = "reconnect_popup_enabled";
     public static final String PREF_VISUAL_OVERSCAN_MODE  = "visual_overscan_mode";
@@ -70,6 +72,9 @@ public class SettingsActivity extends AppCompatActivity {
     private CompoundButton cbPrerelease;
     private CompoundButton cbVisualMode;
     private CompoundButton cbBootAutoStart;
+    private TextView       tvBootAppName;
+    private View           rowBootApp;
+    private CompoundButton cbLightweightMode;
     private CompoundButton cbShowCategoryFilters;
     private CompoundButton cbReconnectPopup;
     private View        llSlidersMode;
@@ -183,6 +188,9 @@ public class SettingsActivity extends AppCompatActivity {
         cbPrerelease  = findViewById(R.id.cb_prerelease);
         cbVisualMode  = findViewById(R.id.cb_visual_mode);
         cbBootAutoStart = findViewById(R.id.cb_boot_auto_start);
+        tvBootAppName      = findViewById(R.id.tv_boot_app_name);
+        rowBootApp         = findViewById(R.id.row_boot_app);
+        cbLightweightMode  = findViewById(R.id.cb_lightweight_mode);
         llSlidersMode = findViewById(R.id.ll_sliders_mode);
         llVisualMode  = findViewById(R.id.ll_visual_overscan);
         btnHMinus     = findViewById(R.id.btn_h_minus);
@@ -225,6 +233,13 @@ public class SettingsActivity extends AppCompatActivity {
         // Auto Boot Projection toggle state
         boolean bootAutoStart = prefs.getBoolean(PREF_BOOT_AUTO_START, false);
         cbBootAutoStart.setChecked(bootAutoStart);
+
+        // Lightweight mode toggle
+        if (cbLightweightMode != null)
+            cbLightweightMode.setChecked(prefs.getBoolean(PREF_LIGHTWEIGHT_MODE, false));
+
+        // Boot default app
+        refreshBootAppLabel(prefs);
         
         // Category filters toggle
         boolean showCatFilters = prefs.getBoolean(PREF_SHOW_CATEGORY_FILTERS, false);
@@ -320,6 +335,20 @@ public class SettingsActivity extends AppCompatActivity {
                     .putBoolean(PREF_BOOT_AUTO_START, isChecked).apply();
         });
 
+        // Boot app picker row
+        if (rowBootApp != null) {
+            rowBootApp.setOnClickListener(v -> showBootAppPicker());
+        }
+
+        // Lightweight mode checkbox
+        if (cbLightweightMode != null) {
+            cbLightweightMode.setOnCheckedChangeListener((btn, isChecked) -> {
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                        .putBoolean(PREF_LIGHTWEIGHT_MODE, isChecked).apply();
+                AppLogger.i("SettingsActivity", "lightweight_mode=" + isChecked);
+            });
+        }
+
         View.OnClickListener dpadListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -376,6 +405,62 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     // ── Logic ─────────────────────────────────────────────────────────────────
+
+    private void refreshBootAppLabel(SharedPreferences prefs) {
+        if (tvBootAppName == null) return;
+        String pkg = prefs.getString(PREF_BOOT_DEFAULT_APP, null);
+        if (pkg == null || pkg.isEmpty()) {
+            tvBootAppName.setText(getString(R.string.settings_boot_app_none));
+            return;
+        }
+        try {
+            android.content.pm.ApplicationInfo ai =
+                    getPackageManager().getApplicationInfo(pkg, 0);
+            tvBootAppName.setText(getPackageManager().getApplicationLabel(ai));
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            tvBootAppName.setText(pkg);
+        }
+    }
+
+    private void showBootAppPicker() {
+        java.util.List<android.content.pm.ResolveInfo> apps = getPackageManager()
+                .queryIntentActivities(
+                        new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0);
+        apps.sort((a, b) -> {
+            String la = (String) a.loadLabel(getPackageManager());
+            String lb = (String) b.loadLabel(getPackageManager());
+            return la.compareToIgnoreCase(lb);
+        });
+
+        String[] labels = new String[apps.size() + 1];
+        String[] packages = new String[apps.size() + 1];
+        labels[0]   = getString(R.string.settings_boot_app_none);
+        packages[0] = "";
+        for (int i = 0; i < apps.size(); i++) {
+            labels[i + 1]   = (String) apps.get(i).loadLabel(getPackageManager());
+            packages[i + 1] = apps.get(i).activityInfo.packageName;
+        }
+
+        String current = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(PREF_BOOT_DEFAULT_APP, "");
+        int checked = 0;
+        for (int i = 1; i < packages.length; i++) {
+            if (packages[i].equals(current)) { checked = i; break; }
+        }
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(getString(R.string.settings_boot_app_picker_title))
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    String pkg = packages[which];
+                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    prefs.edit().putString(PREF_BOOT_DEFAULT_APP, pkg).apply();
+                    refreshBootAppLabel(prefs);
+                    AppLogger.i("SettingsActivity", "boot_default_app → " + (pkg.isEmpty() ? "none" : pkg));
+                    dialog.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
 
     private void saveInsets(int h, int v) {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()

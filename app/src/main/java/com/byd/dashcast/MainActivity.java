@@ -51,6 +51,10 @@ import android.graphics.Typeface;
 import com.byd.dashcast.dashboard.DashboardLauncher;
 import com.byd.dashcast.model.AppInfo;
 
+import android.net.Uri;
+import net.osmand.aidl.IOsmAndAidlInterface;
+import net.osmand.aidl.navigate.AStopNavigationParams;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -163,6 +167,7 @@ public class MainActivity extends AppCompatActivity
     private View     llAppListSection;  // wrapper for title header + search bar
     private Button   btnActivateCluster;
     private Button   btnRestoreCluster;
+    private Button   btnRestartNav;
     private android.widget.ImageView ivNavLogo; // v0.9.81: long-press = overflow menu
     private Button   btnShowMirror;
     private Button   btnSplitLayout;
@@ -230,6 +235,26 @@ public class MainActivity extends AppCompatActivity
 
     // Screenshot mirror loop (fallback when SurfaceControl.createDisplay() fails)
     private final Handler  mScreenshotHandler  = new Handler(Looper.getMainLooper());
+
+    // OsmAnd+ AIDL — bound in onStart, unbound in onStop
+    private IOsmAndAidlInterface mOsmAndAidl = null;
+    private boolean mOsmAndBindRequested = false;
+    private com.google.android.material.textfield.TextInputEditText etNavAddress;
+    private Button btnNavGo;
+    private Button btnNavStop;
+    private final ServiceConnection mOsmAndConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mOsmAndAidl = IOsmAndAidlInterface.Stub.asInterface(service);
+            AppLogger.i(TAG, "OsmAnd+ AIDL connected");
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mOsmAndAidl = null;
+            mOsmAndBindRequested = false;
+            AppLogger.i(TAG, "OsmAnd+ AIDL disconnected");
+        }
+    };
 
     // MirrorDaemon — Binder received via broadcast ACTION_DAEMON_READY
     private IBinder mDaemonBinder = null;
@@ -300,8 +325,12 @@ public class MainActivity extends AppCompatActivity
         registerReceiver(mDaemonReadyReceiver,
                 new IntentFilter(com.byd.dashcast.daemon.MirrorDaemon.ACTION_DAEMON_READY));
 
-        // Floating 📺 mirror button — started once, visibility controlled by show()/hide()
-        startService(new Intent(this, FloatingRemoteButton.class));
+        // Floating 📺 mirror button — skipped in Lightweight Mode (no mirror daemon, no overlay)
+        boolean lightweightMode = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.PREF_LIGHTWEIGHT_MODE, false);
+        if (!lightweightMode) {
+            startService(new Intent(this, FloatingRemoteButton.class));
+        }
 
         // Handle a tap on the floating button when the Activity is already alive
         // (Activity exists in back stack → onNewIntent fires instead of onCreate)
@@ -314,6 +343,7 @@ public class MainActivity extends AppCompatActivity
         if (mStatusDot != null) mStatusDot.setBackground(mStatusDotDrawable);
         btnActivateCluster  = (Button)   findViewById(R.id.btn_activate_cluster);
         btnRestoreCluster   = (Button)   findViewById(R.id.btn_restore_cluster);
+        btnRestartNav       = (Button)   findViewById(R.id.btn_restart_nav);
         ivNavLogo           = (android.widget.ImageView) findViewById(R.id.iv_nav_logo);
         btnShowMirror       = (Button)   findViewById(R.id.btn_show_mirror);
         llAppListSection    =            findViewById(R.id.ll_app_list_section);
@@ -406,6 +436,74 @@ public class MainActivity extends AppCompatActivity
                 return true;
             }
         });
+
+        // Button "Restart nav" — force-restarts the cluster projection and relaunches the saved boot app.
+        // Use after a BYD soft reset (volume 10s) which destroys the VirtualDisplay.
+        if (btnRestartNav != null) {
+            btnRestartNav.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    String bootPkg = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE)
+                            .getString(SettingsActivity.PREF_BOOT_DEFAULT_APP, null);
+                    tvDashboardStatus.setText(getString(R.string.status_activating_cluster));
+                    setStatusDot(DOT_COLOR_PENDING);
+                    if (mServiceBound && mClusterService != null) {
+                        AppLogger.i(TAG, "btnRestartNav: forceRestartProjection → " + bootPkg);
+                        mClusterService.forceRestartProjection(bootPkg);
+                    } else {
+                        AppLogger.i(TAG, "btnRestartNav: service not bound — starting fresh");
+                        Intent svcIntent = new Intent(MainActivity.this, ClusterService.class);
+                        if (bootPkg != null) svcIntent.putExtra(ClusterService.EXTRA_AUTO_LAUNCH_PKG, bootPkg);
+                        startForegroundService(svcIntent);
+                        if (!mBindRequested) {
+                            mBindRequested = true;
+                            bindService(new Intent(MainActivity.this, ClusterService.class),
+                                    mServiceConn, BIND_AUTO_CREATE);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Navigation control panel — address input + Go/Stop buttons
+        etNavAddress = (com.google.android.material.textfield.TextInputEditText)
+                findViewById(R.id.et_nav_address);
+        btnNavGo   = (Button) findViewById(R.id.btn_nav_go);
+        btnNavStop = (Button) findViewById(R.id.btn_nav_stop);
+        if (btnNavGo != null) {
+            btnNavGo.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    String address = etNavAddress != null
+                            ? etNavAddress.getText().toString().trim() : "";
+                    if (address.isEmpty()) return;
+                    try {
+                        Uri geoUri = Uri.parse("geo:0,0?q=" + Uri.encode(address));
+                        Intent navIntent = new Intent(Intent.ACTION_VIEW, geoUri);
+                        navIntent.setPackage("net.osmand.plus");
+                        navIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(navIntent);
+                    } catch (android.content.ActivityNotFoundException e) {
+                        Toast.makeText(MainActivity.this, "OsmAnd+ introuvable", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+        if (btnNavStop != null) {
+            btnNavStop.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    if (mOsmAndAidl != null) {
+                        try {
+                            mOsmAndAidl.stopNavigation(new AStopNavigationParams());
+                        } catch (android.os.RemoteException e) {
+                            AppLogger.w(TAG, "stopNavigation failed: " + e.getMessage());
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this,
+                                getString(R.string.main_nav_stop_error), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
 
         // Button &#9654; View toggle (list ↔ grid) in the title header
         btnViewToggle.setOnClickListener(new View.OnClickListener() {
@@ -801,6 +899,17 @@ public class MainActivity extends AppCompatActivity
                 AppLogger.d(TAG, "Not starting ClusterService automatically. Waiting for user action.");
             }
         }
+        // Bind OsmAnd+ AIDL service so stop-navigation works without delay
+        if (!mOsmAndBindRequested) {
+            try {
+                Intent osmAndIntent = new Intent("net.osmand.aidl.OsmAndAidlServiceV2");
+                osmAndIntent.setPackage("net.osmand.plus");
+                boolean bound = bindService(osmAndIntent, mOsmAndConnection, BIND_AUTO_CREATE);
+                if (bound) mOsmAndBindRequested = true;
+            } catch (Exception e) {
+                AppLogger.w(TAG, "OsmAnd+ AIDL bind failed: " + e.getMessage());
+            }
+        }
         startStatePoll();
     }
 
@@ -816,6 +925,11 @@ public class MainActivity extends AppCompatActivity
         stopClusterMirror();
         if (mServiceBound && mClusterService != null) {
             mClusterService.setListener(null);
+        }
+        if (mOsmAndBindRequested) {
+            try { unbindService(mOsmAndConnection); } catch (Exception ignored) {}
+            mOsmAndAidl = null;
+            mOsmAndBindRequested = false;
         }
     }
 
@@ -835,6 +949,11 @@ public class MainActivity extends AppCompatActivity
             unbindService(mServiceConn);
             mServiceBound  = false;
             mBindRequested = false;
+        }
+        if (mOsmAndBindRequested) {
+            try { unbindService(mOsmAndConnection); } catch (Exception ignored) {}
+            mOsmAndAidl = null;
+            mOsmAndBindRequested = false;
         }
         // Release the preview Surface wrapping the TextureView SurfaceTexture so
         // it is not retained until GC (the underlying SurfaceTexture is released

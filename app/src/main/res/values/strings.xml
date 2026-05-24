@@ -149,6 +149,17 @@
     <string name="settings_cluster_1025_desc">Expérimental</string>
     <string name="settings_section_behavior">Comportement</string>
     <string name="settings_boot_auto_start_support">Active le mirror au démarrage véhicule</string>
+    <string name="settings_boot_app_title">Application au démarrage</string>
+    <string name="settings_boot_app_none">Aucune</string>
+    <string name="settings_boot_app_picker_title">Choisir l\'application cluster</string>
+    <string name="settings_lightweight_mode_title">Mode léger</string>
+    <string name="settings_lightweight_mode_support">Désactive le miroir et le bouton flottant — réduit la charge CPU/RAM</string>
+    <string name="main_btn_restart_nav">Redémarrer la navigation</string>
+    <string name="main_nav_section">Navigation OsmAnd+</string>
+    <string name="main_nav_address_hint">Adresse ou lieu</string>
+    <string name="main_nav_btn_go">Naviguer</string>
+    <string name="main_nav_btn_stop">Arrêter la navigation</string>
+    <string name="main_nav_stop_error">OsmAnd+ non connecté</string>
     <string name="settings_reconnect_popup_support">Restaure si déconnecté inopinément</string>
     <string name="settings_category_filters_support">Affiche les chips dans le menu apps</string>
     <string name="settings_section_about">À propos</string>
@@ -210,4 +221,13 @@
     <string name="sysinfo_tile_dashcast_user_signed">user-signed</string>
     <string name="diag_placeholder_title">Page Diag en cours de refonte</string>
     <string name="diag_placeholder_subtitle">Les tests précédents ont été supprimés. De nouveaux outils diagnostiques arriveront ici prochainement.</string>
+    <string name="diag_probe_title">Sonde cluster</string>
+    <string name="diag_probe_subtitle">Détecte les services et écrans de votre véhicule</string>
+    <string name="diag_probe_run">Analyser</string>
+    <string name="diag_probe_idle">Appuyez sur Analyser pour démarrer</string>
+    <string name="diag_probe_running">Analyse en cours…</string>
+    <string name="diag_probe_done">Analyse terminée — copiez le résultat et partagez-le</string>
+    <string name="diag_probe_error">Erreur ADB : %1$s</string>
+    <string name="diag_probe_copy">Copier le résultat</string>
+    <string name="diag_probe_copied">Copié dans le presse-papiers</string>
 </resources>

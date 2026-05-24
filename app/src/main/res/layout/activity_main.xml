@@ -686,6 +686,108 @@
                             app:iconTint="@color/md_on_error_container"/>
                     </GridLayout>
 
+                    <!-- ────── Restart nav button — full width, below the 2×2 grid ────── -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_restart_nav"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:text="@string/main_btn_restart_nav"
+                        android:textSize="14sp"
+                        android:minHeight="52dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:cornerRadius="26dp"
+                        app:icon="@drawable/ic_play_circle"
+                        app:iconGravity="textStart"
+                        app:iconSize="20dp"/>
+
+                    <!-- ────── OsmAnd+ navigation control card ────── -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_nav_control"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:cardBackgroundColor="@color/md_surface_container_low"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- Section label -->
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="12dp"
+                                android:text="@string/main_nav_section"
+                                android:textAllCaps="true"
+                                android:textSize="11sp"
+                                android:letterSpacing="0.12"
+                                android:textStyle="bold"
+                                android:textColor="@color/md_on_surface_variant"/>
+
+                            <!-- Address input row -->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/til_nav_address"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/main_nav_address_hint"
+                                app:endIconMode="clear_text">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/et_nav_address"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="textPostalAddress|textCapWords"
+                                    android:imeOptions="actionGo"
+                                    android:maxLines="1"/>
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <!-- Go button -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_nav_go"
+                                style="@style/Widget.Material3.Button"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:minHeight="52dp"
+                                android:text="@string/main_nav_btn_go"
+                                app:cornerRadius="26dp"
+                                app:icon="@drawable/ic_navigation"
+                                app:iconGravity="textStart"
+                                app:iconSize="20dp"/>
+
+                            <!-- Stop navigation button -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_nav_stop"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:minHeight="52dp"
+                                android:text="@string/main_nav_btn_stop"
+                                app:cornerRadius="26dp"
+                                app:icon="@drawable/ic_stop"
+                                app:iconGravity="textStart"
+                                app:iconSize="20dp"/>
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
                     <!-- ────── Cluster control panel (collapsible, when 3rd party app on cluster) ────── -->
                     <LinearLayout
                         android:id="@+id/panel_cluster_control"

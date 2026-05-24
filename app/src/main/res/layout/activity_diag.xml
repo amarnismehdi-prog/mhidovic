@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    DiagActivity — M3 redesign (v0.9.88).
-    Tests from previous versions have been wiped; new diagnostic tools will be added
-    here from scratch. This is intentionally a clean slate with only the nav rail
-    and a placeholder hero card.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -138,11 +132,12 @@
                 android:textColor="@color/md_on_surface_variant"/>
         </LinearLayout>
 
-        <!-- Placeholder hero -->
+        <!-- Probe card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
@@ -151,44 +146,115 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:paddingStart="32dp" android:paddingEnd="32dp"
-                android:paddingTop="48dp" android:paddingBottom="48dp">
+                android:padding="20dp">
 
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/ic_stethoscope"
-                    android:padding="22dp"
-                    android:background="@drawable/bg_diag_card_icon"
-                    app:tint="@color/md_primary"
-                    android:contentDescription="@string/main_nav_diag"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Header row: title + run button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/diag_placeholder_title"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    android:gravity="center"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
+                    <LinearLayout
+                        android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/diag_probe_title"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/diag_probe_subtitle"
+                            android:textSize="12sp"
+                            android:textColor="@color/md_on_surface_variant"/>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_probe_run"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/diag_probe_run"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:icon="@drawable/ic_stethoscope"
+                        app:iconSize="18dp"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="20dp"/>
+                </LinearLayout>
+
+                <!-- Progress bar -->
+                <ProgressBar
+                    android:id="@+id/pb_probe"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:layout_marginTop="14dp"
+                    android:indeterminate="true"
+                    android:visibility="gone"/>
+
+                <!-- Status label -->
                 <TextView
+                    android:id="@+id/tv_probe_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/diag_probe_idle"
+                    android:textSize="12sp"
+                    android:textColor="@color/md_on_surface_variant"
+                    android:visibility="gone"/>
+
+                <!-- Output box -->
+                <ScrollView
+                    android:id="@+id/sv_probe_output"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_diag_output_box"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    android:fadeScrollbars="false">
+
+                    <TextView
+                        android:id="@+id/tv_probe_output"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textIsSelectable="true"/>
+                </ScrollView>
+
+                <!-- Copy button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_probe_copy"
+                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:layout_marginStart="32dp"
-                    android:layout_marginEnd="32dp"
-                    android:text="@string/diag_placeholder_subtitle"
-                    android:textSize="14sp"
-                    android:textColor="@color/md_on_surface_variant"
-                    android:gravity="center"/>
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/diag_probe_copy"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_copy"
+                    app:iconSize="18dp"
+                    app:iconGravity="textStart"
+                    app:cornerRadius="20dp"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
     </LinearLayout>
 </LinearLayout>

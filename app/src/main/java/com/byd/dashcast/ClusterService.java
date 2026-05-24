@@ -41,6 +41,9 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     private static final int NOTIF_ID = 1;
     public static boolean sIsRunning = false;
 
+    /** Package name to launch automatically once the cluster display is ready (boot auto-launch). */
+    public static final String EXTRA_AUTO_LAUNCH_PKG = "auto_launch_pkg";
+
     // Overscan inset values are stored in SharedPreferences and editable via SettingsActivity.
     // Defaults: H=80 (left/right), V=50 (top/bottom). Read at each use so changes apply live.
 
@@ -70,6 +73,8 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
      * use-after-destroy NPEs on {@link #mLauncher} / {@link #mMirrorManager}.
      */
     private volatile boolean       mDestroyed = false;
+    /** Set from EXTRA_AUTO_LAUNCH_PKG at boot; cleared after the first successful launch. */
+    private String                 mPendingAutoLaunchPkg = null;
     // Reusable handler on the main thread (replaces ephemeral new Handler() calls).
     private final android.os.Handler mMainHandler =
             new android.os.Handler(android.os.Looper.getMainLooper());
@@ -84,9 +89,16 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
         mMirrorManager  = new ClusterMirrorManager();
         mInputForwarder = new ClusterInputForwarder(this);
         
-        // Pre-start the MirrorDaemon (app_process via ADB) for Real-Time Cluster Mirror + Touch
-        // Executed here instead of in MainActivity to avoid restarting it on every screen rotation.
-        AdbLocalClient.startMirrorDaemon(this);
+        // Pre-start the MirrorDaemon unless Lightweight Mode is active.
+        // Lightweight Mode skips the mirror daemon entirely — saves the app_process RAM/CPU cost
+        // for setups that only push an app to the cluster (e.g. OsmAnd+) with no touch mirror.
+        boolean lightweight = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.PREF_LIGHTWEIGHT_MODE, false);
+        if (!lightweight) {
+            AdbLocalClient.startMirrorDaemon(this);
+        } else {
+            AppLogger.i(TAG, "Lightweight mode: MirrorDaemon skipped");
+        }
         
         createNotificationChannel();
         startForeground(NOTIF_ID, buildNotification("Cluster: initializing…"));
@@ -101,7 +113,14 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // START_STICKY: the system recreates the service if killed due to low memory
+        // intent is null on START_STICKY restart — guard before reading extras
+        if (intent != null) {
+            String pkg = intent.getStringExtra(EXTRA_AUTO_LAUNCH_PKG);
+            if (pkg != null && !pkg.isEmpty()) {
+                mPendingAutoLaunchPkg = pkg;
+                AppLogger.i(TAG, "Auto-launch scheduled on cluster ready: " + pkg);
+            }
+        }
         return START_STICKY;
     }
 
@@ -559,6 +578,37 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
     }
 
     /**
+     * Hard-resets projection state then re-runs the full activation sequence.
+     * Cancels stale handlers and the current DisplayHelper state before restarting,
+     * which is necessary after a BYD soft reset (volume 10s) that destroys the VirtualDisplay
+     * while ClusterService is still alive.
+     * If autoLaunchPkg is non-null, that app is launched on the cluster once it is ready.
+     */
+    public void forceRestartProjection(final String autoLaunchPkg) {
+        AppLogger.i(TAG, "forceRestartProjection → " + autoLaunchPkg);
+        mMainHandler.removeCallbacksAndMessages(null);
+        if (mDisplayHelper != null) {
+            // stopWithoutAdb: cancels handlers + unregisters listeners, no ADB restore commands
+            // (cluster is already dead after soft reset — sending restore cmds would be noise)
+            mDisplayHelper.stopWithoutAdb();
+        }
+        if (autoLaunchPkg != null && !autoLaunchPkg.isEmpty()) {
+            mPendingAutoLaunchPkg = autoLaunchPkg;
+        }
+        mProjectionActive = true;
+        updateNotification("Cluster: restarting…");
+        // Short delay so stopWithoutAdb can clean up before start() re-registers listeners
+        mMainHandler.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (!mDestroyed && mDisplayHelper != null) {
+                    AppLogger.i(TAG, "forceRestartProjection: starting native projection");
+                    mDisplayHelper.start();
+                }
+            }
+        }, 600);
+    }
+
+    /**
      * Syncs the service state WITHOUT resending the ADB restore commands.
      * To be used when ADB restore has already been done upstream (e.g. restoreBydDashboard).
      * Avoids double sending sendInfo(18+0).
@@ -604,6 +654,15 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
 
         if (mListener != null) {
             mListener.onClusterDisplayConnected(display, displayId);
+        }
+
+        // Boot auto-launch: fire once when the cluster is first ready
+        if (mPendingAutoLaunchPkg != null) {
+            final String pkg = mPendingAutoLaunchPkg;
+            mPendingAutoLaunchPkg = null;
+            AppLogger.i(TAG, "Cluster ready — auto-launching " + pkg);
+            launchOnDashboard(pkg, success ->
+                    AppLogger.i(TAG, "Auto-launch " + pkg + " → " + (success ? "OK" : "FAILED")));
         }
     }
 
