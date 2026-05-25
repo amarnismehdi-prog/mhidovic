@@ -148,6 +148,19 @@
             android:screenOrientation="landscape"
             android:parentActivityName=".MainActivity"/>
 
+        <!-- NavCast Tablet Demo — standalone preview, no BYD car required -->
+        <activity
+            android:name=".TabletDemoActivity"
+            android:label="NavCast Demo"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <!-- NavCast: 3D map activity for cluster display (Display 1, 1920×720) -->
         <activity
             android:name=".ClusterMapActivity"
