@@ -80,6 +80,10 @@
     <uses-permission android:name="android.permission.BYDAUTO_RADAR_COMMON"/>
     <uses-permission android:name="android.permission.BYDAUTO_RADAR_GET"/>
 
+    <!-- NavCast: GPS for 3D navigation -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <!-- Confirmed required to launch on the cluster display (DiLink 3.0).
          INTERNAL_SYSTEM_WINDOW: signature permission granted with platform.keystore.
          MANAGE_ACTIVITY_STACKS (signature|privileged) : requis pour setLaunchDisplayId()
@@ -143,6 +147,25 @@
             android:label="@string/settings_header"
             android:screenOrientation="landscape"
             android:parentActivityName=".MainActivity"/>
+
+        <!-- NavCast: 3D map activity for cluster display (Display 1, 1920×720) -->
+        <activity
+            android:name=".ClusterMapActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"/>
+
+        <!-- NavCast: mockup preview on main 15" display -->
+        <activity
+            android:name=".MockupActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <!-- Google Maps API key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key"/>
 
         <!-- Foreground Service : maintient la projection cluster en background -->
         <service

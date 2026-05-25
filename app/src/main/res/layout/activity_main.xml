@@ -428,7 +428,7 @@
             </LinearLayout>
 
             <!-- ═══════════════════════════════════════ -->
-            <!-- RIGHT PANE: OsmAnd+ navigation          -->
+            <!-- RIGHT PANE: NavCast navigation control   -->
             <!-- ═══════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/ll_right_pane"
@@ -448,18 +448,17 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:padding="20dp"
-                        android:gravity="top">
+                        android:padding="20dp">
 
-                        <!-- OsmAnd+ header -->
+                        <!-- NavCast header -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
                             android:gravity="center_vertical"
-                            android:layout_marginBottom="16dp">
+                            android:layout_marginBottom="12dp">
 
                             <ImageView
                                 android:layout_width="32dp"
@@ -479,29 +478,47 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="OsmAnd+"
+                                    android:text="NavCast"
                                     android:textSize="16sp"
                                     android:textStyle="bold"
                                     android:textColor="@color/md_on_surface"/>
 
                                 <TextView
+                                    android:id="@+id/tv_nav_status_label"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/main_nav_section"
+                                    android:text="Navigation 3D sur cluster"
                                     android:textSize="12sp"
                                     android:textColor="@color/md_on_surface_variant"/>
 
                             </LinearLayout>
 
+                            <!-- Preview cluster button -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_preview_cluster"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:text="Aperçu"
+                                android:textSize="12sp"
+                                app:cornerRadius="18dp"
+                                app:icon="@drawable/ic_visibility"
+                                app:iconSize="16dp"
+                                app:iconGravity="textStart"
+                                app:iconPadding="4dp"/>
+
                         </LinearLayout>
 
-                        <!-- Address input -->
+                        <!-- Places search field -->
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/til_nav_address"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="@string/main_nav_address_hint"
+                            android:hint="Rechercher une destination…"
+                            app:startIconDrawable="@drawable/ic_navigation"
                             app:endIconMode="clear_text">
 
                             <com.google.android.material.textfield.TextInputEditText
@@ -509,12 +526,95 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="textPostalAddress|textCapWords"
-                                android:imeOptions="actionGo"
+                                android:imeOptions="actionSearch"
                                 android:maxLines="1"/>
 
                         </com.google.android.material.textfield.TextInputLayout>
 
-                        <!-- Naviguer -->
+                        <!-- Places autocomplete suggestions -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rv_suggestions"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:layout_marginTop="4dp"
+                            android:visibility="gone"
+                            android:clipToPadding="false"/>
+
+                        <!-- ETA / status card — shown while navigating -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/card_eta"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone"
+                            app:cardBackgroundColor="#1a1a2e"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:id="@+id/tv_eta_destination"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=""
+                                        android:textColor="#CCCCFF"
+                                        android:textSize="13sp"
+                                        android:maxLines="1"
+                                        android:ellipsize="end"/>
+
+                                    <TextView
+                                        android:id="@+id/tv_eta_step"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=""
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="15sp"
+                                        android:textStyle="bold"
+                                        android:maxLines="1"
+                                        android:ellipsize="end"/>
+
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:gravity="end">
+
+                                    <TextView
+                                        android:id="@+id/tv_eta_time"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=""
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="20sp"
+                                        android:textStyle="bold"/>
+
+                                    <TextView
+                                        android:id="@+id/tv_eta_dist"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=""
+                                        android:textColor="#AAAACC"
+                                        android:textSize="12sp"/>
+                                </LinearLayout>
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Naviguer button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_nav_go"
                             style="@style/Widget.Material3.Button"
@@ -524,12 +624,13 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:minHeight="52dp"
-                            android:text="@string/main_nav_btn_go"
+                            android:text="Naviguer"
                             android:textSize="15sp"
                             app:cornerRadius="26dp"
                             app:icon="@drawable/ic_navigation"
                             app:iconGravity="textStart"
-                            app:iconSize="20dp"/>
+                            app:iconSize="20dp"
+                            android:visibility="gone"/>
 
                         <!-- Arrêter navigation -->
                         <com.google.android.material.button.MaterialButton
@@ -541,32 +642,30 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:minHeight="52dp"
-                            android:text="@string/main_nav_btn_stop"
+                            android:text="Arrêter la navigation"
                             android:textSize="15sp"
                             app:cornerRadius="26dp"
                             app:icon="@drawable/ic_stop"
                             app:iconGravity="textStart"
-                            app:iconSize="20dp"/>
+                            app:iconSize="20dp"
+                            android:visibility="gone"/>
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="16dp"/>
-
-                        <!-- Redémarrer OsmAnd+ -->
+                        <!-- Activate cluster button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_restart_nav"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            android:minHeight="52dp"
-                            android:text="@string/main_btn_restart_nav"
-                            android:textSize="15sp"
-                            app:cornerRadius="26dp"
+                            android:minHeight="48dp"
+                            android:text="Relancer le cluster"
+                            android:textSize="13sp"
+                            app:cornerRadius="24dp"
                             app:icon="@drawable/ic_play_circle"
                             app:iconGravity="textStart"
-                            app:iconSize="20dp"/>
+                            app:iconSize="18dp"/>
 
                     </LinearLayout>
 

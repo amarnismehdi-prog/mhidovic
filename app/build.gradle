@@ -21,8 +21,8 @@ android {
         applicationId "com.byd.dashcast"
         minSdkVersion 29
         targetSdkVersion 29
-        versionCode 230
-        versionName "1.2.34"
+        versionCode 231
+        versionName "2.0.0"
     }
 
     buildTypes {
@@ -79,4 +79,12 @@ dependencies {
 
     // dadb — pure-JVM ADB client (same library used by Overdrive)
     implementation 'dev.mobile:dadb:1.2.7'
+
+    // NavCast — Google Maps 3D, Places autocomplete, Fused Location
+    implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    implementation 'com.google.android.libraries.places:places:3.3.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+
+    // LocalBroadcastManager (standalone, not transitively pulled in by appcompat 1.1.0)
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
 }

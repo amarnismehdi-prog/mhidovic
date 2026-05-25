@@ -676,20 +676,29 @@ public class ClusterService extends Service implements DashboardDisplayHelper.Li
             mListener.onClusterDisplayConnected(display, displayId);
         }
 
-        // Auto-launch: use the pending pkg if set, otherwise fall back to the saved default app.
-        // This covers boot (EXTRA_AUTO_LAUNCH_PKG), manual activation, and reconnect after reset.
-        String pkgToLaunch = mPendingAutoLaunchPkg;
-        if (pkgToLaunch == null) {
-            pkgToLaunch = getSharedPreferences(SettingsActivity.PREFS_NAME, MODE_PRIVATE)
-                    .getString(SettingsActivity.PREF_BOOT_DEFAULT_APP, null);
-        }
+        // NavCast: always launch ClusterMapActivity (our 3D nav map) on the cluster display.
+        // Start GPS engine now so the map has a fix ready when it opens.
         mPendingAutoLaunchPkg = null;
-        if (pkgToLaunch != null && !pkgToLaunch.isEmpty()) {
-            final String pkg = pkgToLaunch;
-            AppLogger.i(TAG, "Cluster ready — auto-launching " + pkg);
-            launchOnDashboard(pkg, success ->
-                    AppLogger.i(TAG, "Auto-launch " + pkg + " → " + (success ? "OK" : "FAILED")));
-        }
+        NavigationEngine.getInstance().startGps(this);
+        AppLogger.i(TAG, "Cluster ready — launching ClusterMapActivity on display " + displayId);
+        mMainHandler.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (mDestroyed) return;
+                try {
+                    android.content.Intent mapIntent =
+                            new android.content.Intent(ClusterService.this, ClusterMapActivity.class);
+                    mapIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                            | android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                    android.app.ActivityOptions opts = android.app.ActivityOptions.makeBasic();
+                    opts.setLaunchDisplayId(displayId);
+                    applyClusterFreeformBounds(opts, displayId, "navcast");
+                    startActivityViaIAM(mapIntent, opts);
+                    AppLogger.i(TAG, "ClusterMapActivity launched on display=" + displayId + " OK");
+                } catch (Exception e) {
+                    AppLogger.e(TAG, "ClusterMapActivity launch failed", e);
+                }
+            }
+        }, 2000);
     }
 
     @Override

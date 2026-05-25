@@ -44,8 +44,26 @@ import com.byd.dashcast.dashboard.DashboardLauncher;
 import net.osmand.aidl.IOsmAndAidlInterface;
 import net.osmand.aidl.navigate.AStopNavigationParams;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+
+// NavCast — Places SDK
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.gms.maps.model.LatLng;
+
+// NavCast — RecyclerView adapter for suggestions
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 @android.annotation.SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
 @SuppressWarnings("deprecation")
@@ -123,12 +141,9 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    // OsmAnd+ AIDL
+    // OsmAnd+ AIDL (kept for backward compatibility with stop-nav)
     private IOsmAndAidlInterface mOsmAndAidl = null;
     private boolean mOsmAndBindRequested = false;
-    private com.google.android.material.textfield.TextInputEditText etNavAddress;
-    private Button btnNavGo;
-    private Button btnNavStop;
     private final ServiceConnection mOsmAndConnection = new ServiceConnection() {
         @Override public void onServiceConnected(ComponentName name, IBinder service) {
             mOsmAndAidl = IOsmAndAidlInterface.Stub.asInterface(service);
@@ -137,6 +152,66 @@ public class MainActivity extends AppCompatActivity
         @Override public void onServiceDisconnected(ComponentName name) {
             mOsmAndAidl = null;
             mOsmAndBindRequested = false;
+        }
+    };
+
+    // ── NavCast Places search ─────────────────────────────────────────────────
+    private PlacesClient mPlacesClient;
+    private com.google.android.material.textfield.TextInputEditText etNavAddress;
+    private Button btnNavGo;
+    private Button btnNavStop;
+    private Button btnPreviewCluster;
+    private RecyclerView rvSuggestions;
+    // ETA card views
+    private View   cardEta;
+    private TextView tvEtaDestination;
+    private TextView tvEtaStep;
+    private TextView tvEtaTime;
+    private TextView tvEtaDist;
+
+    // Selected destination from Places
+    private LatLng mSelectedLatLng = null;
+    private String mSelectedName   = null;
+
+    // Autocomplete predictions
+    private final List<AutocompletePrediction> mSuggestions = new ArrayList<>();
+    private RecyclerView.Adapter<?>            mSuggestionsAdapter;
+
+    // NavCast broadcast receiver
+    private final BroadcastReceiver mNavCastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action == null) return;
+            switch (action) {
+                case NavigationEngine.ACTION_STEP: {
+                    String text  = intent.getStringExtra(NavigationEngine.EXTRA_STEP_TEXT);
+                    int    distM = intent.getIntExtra(NavigationEngine.EXTRA_STEP_DIST_M, 0);
+                    int    etaSec= intent.getIntExtra(NavigationEngine.EXTRA_ETA_SECONDS, 0);
+                    int    totM  = intent.getIntExtra(NavigationEngine.EXTRA_TOTAL_DIST_M, 0);
+                    if (cardEta != null) {
+                        cardEta.setVisibility(View.VISIBLE);
+                        if (tvEtaStep != null) tvEtaStep.setText(
+                                NavigationEngine.formatDistance(distM)
+                                + (text != null ? " — " + text : ""));
+                        if (tvEtaTime != null) tvEtaTime.setText(
+                                NavigationEngine.formatDuration(etaSec));
+                        if (tvEtaDist != null) tvEtaDist.setText(
+                                NavigationEngine.formatDistance(totM));
+                    }
+                    if (btnNavStop != null) btnNavStop.setVisibility(View.VISIBLE);
+                    if (btnNavGo   != null) btnNavGo.setVisibility(View.GONE);
+                    break;
+                }
+                case NavigationEngine.ACTION_ARRIVED:
+                    if (cardEta != null) {
+                        if (tvEtaStep != null) tvEtaStep.setText("Vous êtes arrivé(e)");
+                        if (tvEtaTime != null) tvEtaTime.setText("");
+                        if (tvEtaDist != null) tvEtaDist.setText("");
+                    }
+                    if (btnNavStop != null) btnNavStop.setVisibility(View.GONE);
+                    break;
+            }
         }
     };
 
@@ -247,6 +322,51 @@ public class MainActivity extends AppCompatActivity
 
         mDashboardLauncher = new DashboardLauncher(this);
 
+        // ── NavCast additional views ──
+        btnPreviewCluster   = (Button) findViewById(R.id.btn_preview_cluster);
+        rvSuggestions       = (RecyclerView) findViewById(R.id.rv_suggestions);
+        cardEta             = findViewById(R.id.card_eta);
+        tvEtaDestination    = (TextView) findViewById(R.id.tv_eta_destination);
+        tvEtaStep           = (TextView) findViewById(R.id.tv_eta_step);
+        tvEtaTime           = (TextView) findViewById(R.id.tv_eta_time);
+        tvEtaDist           = (TextView) findViewById(R.id.tv_eta_dist);
+
+        // Init Places SDK
+        if (!Places.isInitialized()) {
+            try {
+                Places.initialize(getApplicationContext(), getString(R.string.google_maps_key));
+            } catch (Exception e) {
+                AppLogger.w(TAG, "Places init: " + e.getMessage());
+            }
+        }
+        try {
+            mPlacesClient = Places.createClient(this);
+        } catch (Exception e) {
+            AppLogger.w(TAG, "PlacesClient: " + e.getMessage());
+        }
+
+        // Suggestions RecyclerView
+        if (rvSuggestions != null) {
+            rvSuggestions.setLayoutManager(new LinearLayoutManager(this));
+            mSuggestionsAdapter = buildSuggestionsAdapter();
+            rvSuggestions.setAdapter(mSuggestionsAdapter);
+        }
+
+        // OsmAnd address field: text watcher → Places autocomplete
+        if (etNavAddress != null) {
+            etNavAddress.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int st, int cnt, int af) {}
+                @Override public void afterTextChanged(android.text.Editable s) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String q = s.toString().trim();
+                    mSelectedLatLng = null;
+                    mSelectedName   = null;
+                    if (btnNavGo != null) btnNavGo.setVisibility(View.VISIBLE);
+                    queryPlaces(q);
+                }
+            });
+        }
+
         // ── Button wiring ──
 
         btnActivateCluster.setOnClickListener(new View.OnClickListener() {
@@ -289,19 +409,25 @@ public class MainActivity extends AppCompatActivity
         if (btnNavGo != null) {
             btnNavGo.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
-                    String address = etNavAddress != null
-                            ? etNavAddress.getText().toString().trim() : "";
-                    if (address.isEmpty()) return;
-                    try {
-                        Uri geoUri = Uri.parse("geo:0,0?q=" + Uri.encode(address));
-                        Intent navIntent = new Intent(Intent.ACTION_VIEW, geoUri);
-                        navIntent.setPackage("net.osmand.plus");
-                        navIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP
-                                | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(navIntent);
-                    } catch (android.content.ActivityNotFoundException e) {
-                        Toast.makeText(MainActivity.this, "OsmAnd+ introuvable", Toast.LENGTH_SHORT).show();
+                    if (mSelectedLatLng == null) {
+                        // Try geocoding from text if no prediction selected
+                        String text = etNavAddress != null
+                                ? etNavAddress.getText().toString().trim() : "";
+                        if (text.isEmpty()) {
+                            Toast.makeText(MainActivity.this,
+                                    "Entrez une destination", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        // Fetch first suggestion LatLng if available
+                        if (!mSuggestions.isEmpty()) {
+                            selectSuggestion(mSuggestions.get(0));
+                            return;
+                        }
+                        Toast.makeText(MainActivity.this,
+                                "Sélectionnez une suggestion", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    startNavCast(mSelectedLatLng, mSelectedName);
                 }
             });
         }
@@ -309,16 +435,20 @@ public class MainActivity extends AppCompatActivity
         if (btnNavStop != null) {
             btnNavStop.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
-                    if (mOsmAndAidl != null) {
-                        try {
-                            mOsmAndAidl.stopNavigation(new AStopNavigationParams());
-                        } catch (android.os.RemoteException e) {
-                            AppLogger.w(TAG, "stopNavigation: " + e.getMessage());
-                        }
-                    } else {
-                        Toast.makeText(MainActivity.this,
-                                getString(R.string.main_nav_stop_error), Toast.LENGTH_SHORT).show();
-                    }
+                    NavigationEngine.getInstance().stopNavigation(MainActivity.this);
+                    if (cardEta  != null) cardEta.setVisibility(View.GONE);
+                    if (btnNavStop != null) btnNavStop.setVisibility(View.GONE);
+                    if (btnNavGo   != null) btnNavGo.setVisibility(View.VISIBLE);
+                    mSelectedLatLng = null;
+                    mSelectedName   = null;
+                }
+            });
+        }
+
+        if (btnPreviewCluster != null) {
+            btnPreviewCluster.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    startActivity(new Intent(MainActivity.this, MockupActivity.class));
                 }
             });
         }
@@ -492,6 +622,16 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
+        // Register NavCast receiver
+        IntentFilter navFilter = new IntentFilter();
+        navFilter.addAction(NavigationEngine.ACTION_STEP);
+        navFilter.addAction(NavigationEngine.ACTION_ARRIVED);
+        androidx.localbroadcastmanager.content.LocalBroadcastManager
+                .getInstance(this).registerReceiver(mNavCastReceiver, navFilter);
+
+        // Ensure GPS running for NavCast
+        NavigationEngine.getInstance().startGps(this);
+
         startStatePoll();
     }
 
@@ -507,6 +647,10 @@ public class MainActivity extends AppCompatActivity
             mOsmAndAidl = null;
             mOsmAndBindRequested = false;
         }
+        try {
+            androidx.localbroadcastmanager.content.LocalBroadcastManager
+                    .getInstance(this).unregisterReceiver(mNavCastReceiver);
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -1323,5 +1467,102 @@ public class MainActivity extends AppCompatActivity
             sb.setSpan(new StyleSpan(Typeface.BOLD), spanStart, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             i = boldEnd + 2;
         }
+    }
+
+    // ── NavCast Places autocomplete ───────────────────────────────────────────
+
+    private void queryPlaces(String query) {
+        if (mPlacesClient == null || query.length() < 2) {
+            mSuggestions.clear();
+            if (mSuggestionsAdapter != null) mSuggestionsAdapter.notifyDataSetChanged();
+            if (rvSuggestions != null) rvSuggestions.setVisibility(View.GONE);
+            return;
+        }
+        FindAutocompletePredictionsRequest req = FindAutocompletePredictionsRequest.builder()
+                .setQuery(query)
+                .build();
+        mPlacesClient.findAutocompletePredictions(req)
+                .addOnSuccessListener(response -> {
+                    mSuggestions.clear();
+                    mSuggestions.addAll(response.getAutocompletePredictions());
+                    if (mSuggestionsAdapter != null) mSuggestionsAdapter.notifyDataSetChanged();
+                    if (rvSuggestions != null) {
+                        rvSuggestions.setVisibility(mSuggestions.isEmpty() ? View.GONE : View.VISIBLE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    AppLogger.w(TAG, "Places autocomplete: " + e.getMessage());
+                });
+    }
+
+    private void selectSuggestion(AutocompletePrediction prediction) {
+        if (mPlacesClient == null) return;
+        String placeId = prediction.getPlaceId();
+        FetchPlaceRequest req = FetchPlaceRequest.newInstance(
+                placeId, java.util.Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME));
+        mPlacesClient.fetchPlace(req)
+                .addOnSuccessListener(response -> {
+                    Place place = response.getPlace();
+                    mSelectedLatLng = place.getLatLng();
+                    mSelectedName   = place.getName();
+                    if (etNavAddress != null) {
+                        etNavAddress.setText(place.getName());
+                        etNavAddress.setSelection(etNavAddress.getText().length());
+                    }
+                    mSuggestions.clear();
+                    if (mSuggestionsAdapter != null) mSuggestionsAdapter.notifyDataSetChanged();
+                    if (rvSuggestions != null) rvSuggestions.setVisibility(View.GONE);
+                    if (mSelectedLatLng != null) startNavCast(mSelectedLatLng, mSelectedName);
+                })
+                .addOnFailureListener(e -> {
+                    AppLogger.w(TAG, "fetchPlace: " + e.getMessage());
+                });
+    }
+
+    private void startNavCast(LatLng destination, String name) {
+        // Show navigation started in ETA card
+        if (cardEta != null) {
+            cardEta.setVisibility(View.VISIBLE);
+            if (tvEtaDestination != null) tvEtaDestination.setText(name);
+            if (tvEtaStep != null) tvEtaStep.setText("Calcul de l'itinéraire…");
+            if (tvEtaTime != null) tvEtaTime.setText("");
+            if (tvEtaDist != null) tvEtaDist.setText("");
+        }
+        if (btnNavGo   != null) btnNavGo.setVisibility(View.GONE);
+        if (btnNavStop != null) btnNavStop.setVisibility(View.VISIBLE);
+
+        NavigationEngine.getInstance().startNavigation(this, destination, name);
+        AppLogger.i(TAG, "NavCast started → " + name);
+    }
+
+    /** Simple RecyclerView.Adapter for Places suggestions */
+    private RecyclerView.Adapter<RecyclerView.ViewHolder> buildSuggestionsAdapter() {
+        return new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                TextView tv = new TextView(parent.getContext());
+                tv.setPadding(24, 18, 24, 18);
+                tv.setTextSize(14f);
+                tv.setTextColor(0xFFE0E0E0);
+                tv.setMaxLines(2);
+                tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                tv.setBackground(new android.graphics.drawable.ColorDrawable(0xFF1e1e2e));
+                tv.setLayoutParams(new RecyclerView.LayoutParams(
+                        RecyclerView.LayoutParams.MATCH_PARENT,
+                        RecyclerView.LayoutParams.WRAP_CONTENT));
+                return new RecyclerView.ViewHolder(tv) {};
+            }
+
+            @Override
+            public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+                AutocompletePrediction pred = mSuggestions.get(position);
+                ((TextView) holder.itemView).setText(pred.getFullText(null));
+                holder.itemView.setOnClickListener(v -> selectSuggestion(pred));
+            }
+
+            @Override
+            public int getItemCount() { return mSuggestions.size(); }
+        };
     }
 }

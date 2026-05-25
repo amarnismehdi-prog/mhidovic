@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        NavCast — Google Maps API Key
+        Required APIs to enable in Google Cloud Console:
+          • Maps SDK for Android
+          • Places API (New)
+          • Directions API
+        Replace the value below with your actual API key.
+    -->
+    <string name="google_maps_key" translatable="false">YOUR_GOOGLE_MAPS_API_KEY</string>
+</resources>

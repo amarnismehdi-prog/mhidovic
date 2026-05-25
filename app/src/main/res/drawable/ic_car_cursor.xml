@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="60dp"
+    android:viewportWidth="40"
+    android:viewportHeight="60">
+
+    <!-- Car arrow body — white fill, drop shadow effect via stroke -->
+    <path
+        android:fillColor="#CC000000"
+        android:strokeColor="#00000000"
+        android:pathData="M20,4 L37,56 L20,47 L3,56 Z"
+        android:translateX="1"
+        android:translateY="1"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#2196F3"
+        android:strokeWidth="1.5"
+        android:pathData="M20,4 L37,56 L20,47 L3,56 Z"/>
+
+    <!-- Blue dot at car position -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M20,22 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,22 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0"/>
+</vector>
