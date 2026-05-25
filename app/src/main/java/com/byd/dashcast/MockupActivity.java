@@ -16,7 +16,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.google.android.gms.maps.CameraPosition;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -161,7 +161,6 @@ public class MockupActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.getUiSettings().setCompassEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(false);
-        mMap.setBackgroundColor(Color.parseColor("#1a1a2e"));
 
         mMapView.post(() -> {
             int h = mMapView.getHeight();

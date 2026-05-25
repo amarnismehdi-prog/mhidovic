@@ -17,7 +17,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.google.android.gms.maps.CameraPosition;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -196,9 +196,6 @@ public class ClusterMapActivity extends AppCompatActivity implements OnMapReadyC
         mMap.getUiSettings().setMapToolbarEnabled(false);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(false);
-
-        // Map background colour matches night style
-        mMap.setBackgroundColor(Color.parseColor("#1a1a2e"));
 
         // Camera padding: shift focal point so the cursor sits at 78% from top.
         // getPadding top = height × (CURSOR_FRAC - 0.5) × 2
