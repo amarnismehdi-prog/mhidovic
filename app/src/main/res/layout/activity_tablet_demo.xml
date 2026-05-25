@@ -9,7 +9,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:background="#0d0d1a">
+    android:background="#1a1a1a">
 
     <!-- ══════════════════════════════════════════════════════════════ -->
     <!-- LEFT: Cluster simulation (3D map in 8:3 frame)                -->
@@ -38,7 +38,7 @@
             android:id="@+id/demo_map_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#1a1a2e">
+            android:background="#e8e4dc">
 
             <com.google.android.gms.maps.MapView
                 android:id="@+id/demo_map_view"
@@ -52,7 +52,7 @@
                 android:layout_width="40dp"
                 android:layout_height="60dp"
                 android:layout_gravity="top|center_horizontal"
-                android:src="@drawable/ic_car_cursor"
+                android:src="@drawable/ic_car_chevron"
                 android:contentDescription="car"
                 android:elevation="8dp"/>
 

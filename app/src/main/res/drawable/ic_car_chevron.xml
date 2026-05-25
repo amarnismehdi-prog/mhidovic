@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Blue filled chevron arrow — matches Apple Maps / BYD navigation style -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Drop shadow -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M24,47 L8,34 L24,6 L40,34 Z"
+        android:translateX="1"
+        android:translateY="1"/>
+
+    <!-- White border ring -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,44 L7,32 L24,3 L41,32 Z"/>
+
+    <!-- Blue filled arrow body -->
+    <path
+        android:fillColor="#1A73E8"
+        android:pathData="M24,41 L9,30 L24,5 L39,30 Z"/>
+
+    <!-- Slightly lighter blue highlight on upper half -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M24,5 L24,22 L13.5,27 Z"/>
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M24,5 L24,22 L34.5,27 Z"/>
+</vector>

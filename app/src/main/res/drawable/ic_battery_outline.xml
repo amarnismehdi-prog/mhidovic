@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="24">
+    <!-- Battery body -->
+    <path android:fillColor="#00000000"
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:pathData="M2,4 h40 a2,2 0 0 1 2,2 v12 a2,2 0 0 1 -2,2 H2 a2,2 0 0 1 -2,-2 V6 a2,2 0 0 1 2,-2 Z"/>
+    <!-- Battery terminal -->
+    <path android:fillColor="#333333"
+        android:pathData="M44,9 h3 a1,1 0 0 1 1,1 v4 a1,1 0 0 1 -1,1 h-3 Z"/>
+</vector>

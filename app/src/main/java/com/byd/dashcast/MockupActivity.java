@@ -41,7 +41,7 @@ public class MockupActivity extends AppCompatActivity implements OnMapReadyCallb
     private static final float TILT   = 65f;
     private static final float ZOOM   = 17.5f;
     private static final int   CAM_MS = 400;
-    private static final float CURSOR_FRAC = 0.78f;
+    private static final float CURSOR_FRAC = 0.55f;
 
     private MapView    mMapView;
     private GoogleMap  mMap;
@@ -154,7 +154,7 @@ public class MockupActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap = map;
 
         try {
-            mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_night));
+            mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_day));
         } catch (Exception e) { /* ignore */ }
 
         mMap.getUiSettings().setAllGesturesEnabled(true);  // allow manual pan in mockup
@@ -205,8 +205,8 @@ public class MockupActivity extends AppCompatActivity implements OnMapReadyCallb
         if (mPolyline != null) mPolyline.remove();
         mPolyline = mMap.addPolyline(new PolylineOptions()
                 .addAll(pts)
-                .color(Color.parseColor("#4488FF"))
-                .width(10f)
+                .color(Color.parseColor("#F5C518"))
+                .width(12f)
                 .geodesic(true));
         int etaSec = i.getIntExtra(NavigationEngine.EXTRA_ETA_SECONDS, 0);
         mTvEta.setText(NavigationEngine.formatDuration(etaSec));

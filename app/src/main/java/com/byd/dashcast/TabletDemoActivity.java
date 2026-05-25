@@ -63,7 +63,7 @@ public class TabletDemoActivity extends AppCompatActivity implements OnMapReadyC
     private static final float TILT        = 65f;
     private static final float ZOOM        = 17.5f;
     private static final int   CAM_MS      = 400;
-    private static final float CURSOR_FRAC = 0.78f;
+    private static final float CURSOR_FRAC = 0.55f;
 
     // ─── Unified suggestion model ──────────────────────────────────────────────
 
@@ -299,7 +299,7 @@ public class TabletDemoActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
-        try { mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_night)); }
+        try { mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_day)); }
         catch (Exception e) { /* ignore */ }
 
         mMap.getUiSettings().setCompassEnabled(false);
@@ -349,7 +349,7 @@ public class TabletDemoActivity extends AppCompatActivity implements OnMapReadyC
         if (pts == null || pts.isEmpty()) return;
         if (mPolyline != null) mPolyline.remove();
         mPolyline = mMap.addPolyline(new PolylineOptions()
-                .addAll(pts).color(Color.parseColor("#4488FF")).width(10f).geodesic(true));
+                .addAll(pts).color(Color.parseColor("#F5C518")).width(12f).geodesic(true));
         int eta = i.getIntExtra(NavigationEngine.EXTRA_ETA_SECONDS, 0);
         int dist= i.getIntExtra(NavigationEngine.EXTRA_TOTAL_DIST_M, 0);
         mTvEtaHud.setText(NavigationEngine.formatDuration(eta));

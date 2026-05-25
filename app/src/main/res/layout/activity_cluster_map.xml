@@ -1,56 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ClusterMapActivity layout — renders on Display 1 (1920×720 cluster)
-  3D navigation map with HUD overlay and car cursor fixed at 78% from top
+  ClusterMapActivity — BYD Seal U cluster display (1920×720)
+  Matches reference: light day map · yellow route · blue chevron cursor
+  Top bar: time | EV | gear | ECO | AW | temp
+  Bottom bar: kW | battery% | status | range | speed | trip
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <!-- Full-screen 3D Google Map -->
+    <!-- ── Full-screen 3D map ── -->
     <com.google.android.gms.maps.MapView
         android:id="@+id/cluster_map_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- Top HUD strip: turn instruction + ETA -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- TOP STATUS BAR — time | EV | gear | ECO | AW | °C  -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <LinearLayout
-        android:id="@+id/hud_top"
+        android:id="@+id/hud_top_bar"
         android:layout_width="match_parent"
-        android:layout_height="112dp"
+        android:layout_height="88dp"
         android:layout_gravity="top"
-        android:background="#CC000000"
+        android:background="#F5F2EDEC"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
+        android:paddingStart="40dp"
+        android:paddingEnd="40dp"
+        android:elevation="4dp">
+
+        <!-- Clock -->
+        <TextView
+            android:id="@+id/hud_clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--:--"
+            android:textColor="#1a1a1a"
+            android:textSize="34sp"
+            android:textStyle="normal"
+            android:fontFamily="sans-serif-light"
+            android:letterSpacing="-0.02"/>
+
+        <!-- Spacer -->
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+
+        <!-- EV mode -->
+        <TextView
+            android:id="@+id/hud_ev_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:text="EV"
+            android:textColor="#00AA44"
+            android:textSize="28sp"
+            android:textStyle="bold"/>
+
+        <!-- Gear indicator — big and centered -->
+        <TextView
+            android:id="@+id/hud_gear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:text="P"
+            android:textColor="#111111"
+            android:textSize="52sp"
+            android:textStyle="bold"/>
+
+        <!-- Drive mode -->
+        <TextView
+            android:id="@+id/hud_drive_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:text="ECO"
+            android:textColor="#00AA44"
+            android:textSize="28sp"
+            android:textStyle="bold"/>
+
+        <!-- Climate mode -->
+        <TextView
+            android:id="@+id/hud_climate_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:text="AW"
+            android:textColor="#444444"
+            android:textSize="26sp"/>
+
+        <!-- Temperature -->
+        <TextView
+            android:id="@+id/hud_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--°c"
+            android:textColor="#333333"
+            android:textSize="28sp"/>
+
+    </LinearLayout>
+
+    <!-- Speed limit badge — top-right of map, below top bar -->
+    <LinearLayout
+        android:id="@+id/speed_limit_badge"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="96dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_speed_limit"
+        android:elevation="6dp"
         android:visibility="gone">
 
-        <!-- Turn direction icon -->
+        <TextView
+            android:id="@+id/hud_speed_limit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="60"
+            android:textColor="#CC0000"
+            android:textSize="30sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- Turn instruction strip — slides in above bottom bar when navigating -->
+    <LinearLayout
+        android:id="@+id/hud_turn_strip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="140dp"
+        android:background="#EEFFFFFF"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:elevation="6dp"
+        android:visibility="gone">
+
         <ImageView
             android:id="@+id/hud_turn_icon"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:src="@drawable/ic_turn_straight"
-            android:tint="#FFFFFF"
+            android:tint="#1a1a1a"
             android:contentDescription="turn"/>
 
-        <!-- Distance to next turn + street name -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:orientation="vertical"
-            android:paddingStart="16dp">
+            android:paddingStart="14dp">
 
             <TextView
                 android:id="@+id/hud_distance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--"
-                android:textColor="#FFFFFF"
-                android:textSize="36sp"
+                android:textColor="#111111"
+                android:textSize="28sp"
                 android:textStyle="bold"/>
 
             <TextView
@@ -58,90 +170,34 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textColor="#CCCCFF"
-                android:textSize="20sp"
+                android:textColor="#444444"
+                android:textSize="16sp"
                 android:maxLines="1"
                 android:ellipsize="end"/>
         </LinearLayout>
 
-        <!-- ETA block -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="end"
-            android:paddingEnd="8dp">
-
-            <TextView
-                android:id="@+id/hud_eta"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textColor="#FFFFFF"
-                android:textSize="24sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/hud_remaining"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textColor="#AAAACC"
-                android:textSize="16sp"/>
-        </LinearLayout>
     </LinearLayout>
 
-    <!-- Car cursor fixed at 78% from top, centered horizontally -->
-    <!-- Positioned programmatically in ClusterMapActivity.onMapReady() -->
+    <!-- Car chevron cursor — positioned at 55% from top programmatically -->
     <ImageView
         android:id="@+id/cursor_car"
-        android:layout_width="40dp"
-        android:layout_height="60dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="top|center_horizontal"
-        android:src="@drawable/ic_car_cursor"
-        android:contentDescription="car position"
+        android:src="@drawable/ic_car_chevron"
+        android:contentDescription="car"
         android:elevation="8dp"/>
 
-    <!-- Speed badge — bottom-right corner -->
-    <LinearLayout
-        android:id="@+id/speed_badge"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="16dp"
-        android:background="#CC1a1a2e"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:elevation="4dp">
-
-        <TextView
-            android:id="@+id/speed_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0"
-            android:textColor="#FFFFFF"
-            android:textSize="48sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="km/h"
-            android:textColor="#AAAACC"
-            android:textSize="14sp"/>
-    </LinearLayout>
-
-    <!-- Arrived banner (hidden until arrival) -->
+    <!-- Arrived banner -->
     <TextView
         android:id="@+id/arrived_banner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="#CC2196F3"
+        android:background="#CC1A73E8"
         android:text="Vous êtes arrivé(e)"
         android:textColor="#FFFFFF"
-        android:textSize="32sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:paddingStart="32dp"
         android:paddingEnd="32dp"
@@ -149,5 +205,218 @@
         android:paddingBottom="16dp"
         android:visibility="gone"
         android:elevation="12dp"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- BOTTOM STATUS BAR — kW | battery | OK | range | speed | trip   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/hud_bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_gravity="bottom"
+        android:background="#F0F0EDEA"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:elevation="4dp">
+
+        <!-- Power consumption (kW) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:layout_marginEnd="48dp">
+            <TextView
+                android:id="@+id/hud_power_kw"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#111111"
+                android:textSize="52sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" kW"
+                android:textColor="#555555"
+                android:textSize="22sp"
+                android:paddingBottom="8dp"/>
+        </LinearLayout>
+
+        <!-- Battery + status block -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginEnd="32dp">
+
+            <!-- Battery icon (simple colored bar) -->
+            <LinearLayout
+                android:layout_width="48dp"
+                android:layout_height="22dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_battery_outline"
+                    android:tint="#222222"
+                    android:contentDescription="battery"
+                    android:scaleType="fitCenter"/>
+            </LinearLayout>
+
+            <!-- Battery % -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom">
+                <TextView
+                    android:id="@+id/hud_battery_pct"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="#111111"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" %"
+                    android:textColor="#555555"
+                    android:textSize="16sp"
+                    android:paddingBottom="3dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Battery level bar -->
+        <LinearLayout
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginEnd="32dp">
+
+            <!-- Thin progress bar for battery -->
+            <android.widget.ProgressBar
+                android:id="@+id/hud_battery_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:progress="35"
+                android:max="100"
+                android:progressTint="#44BB44"
+                android:progressBackgroundTint="#CCCCCC"/>
+
+            <!-- Status OK label -->
+            <TextView
+                android:id="@+id/hud_battery_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="OK"
+                android:textColor="#00AA44"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <!-- Range -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:layout_marginEnd="48dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_ev_range"
+                android:tint="#555555"
+                android:contentDescription="range"
+                android:layout_marginEnd="4dp"
+                android:paddingBottom="6dp"
+                android:scaleType="fitCenter"/>
+
+            <TextView
+                android:id="@+id/hud_range_km"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#111111"
+                android:textSize="34sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" km"
+                android:textColor="#555555"
+                android:textSize="18sp"
+                android:paddingBottom="6dp"/>
+        </LinearLayout>
+
+        <!-- Spacer -->
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+
+        <!-- Speed (large, right side) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom">
+                <TextView
+                    android:id="@+id/hud_speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#111111"
+                    android:textSize="56sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" km/h"
+                    android:textColor="#555555"
+                    android:textSize="18sp"
+                    android:paddingBottom="8dp"/>
+            </LinearLayout>
+
+            <!-- Trip meter -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TRIP B  "
+                    android:textColor="#888888"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/hud_trip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.0 km"
+                    android:textColor="#555555"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
 
 </FrameLayout>
